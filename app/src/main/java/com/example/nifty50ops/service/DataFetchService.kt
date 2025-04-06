@@ -15,6 +15,7 @@ import com.example.nifty50ops.database.MarketDatabase
 import com.example.nifty50ops.repository.MarketRepository
 import com.example.nifty50ops.repository.OptionsRepository
 import com.example.nifty50ops.repository.StockRepository
+import com.example.nifty50ops.utils.readJwtToken
 import kotlinx.coroutines.*
 import java.util.*
 
@@ -27,6 +28,8 @@ class DataFetchService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        println("Service created")
+        readJwtToken(this)
 
 //        val db1 = StockDatabase.getDatabase(applicationContext)
 //        val stockRepo = StockRepository(db1.stockDao())

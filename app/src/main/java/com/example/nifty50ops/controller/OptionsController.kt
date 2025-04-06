@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.nifty50ops.model.OptionsEntity
 import com.example.nifty50ops.network.ApiService
 import com.example.nifty50ops.repository.OptionsRepository
+import com.example.nifty50ops.utils.readSecurityIdToSymbolMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -14,7 +15,10 @@ import java.util.Locale
 
 class OptionsController(private val optionRepository: OptionsRepository) {
 
+    var securityIdToSymbol = mapOf<Int, String>()
+
     suspend fun fetchOptionsData(context: Context) {
+        securityIdToSymbol = readSecurityIdToSymbolMap(context)
         val prefs = securityIdToSymbol.keys.joinToString(",") { "NSE:$it:OPTION" }
         ApiService.fetchData(context, prefs)?.let { responseBody ->
             saveToDatabase(parseOptionResponse(responseBody))
@@ -111,51 +115,6 @@ class OptionsController(private val optionRepository: OptionsRepository) {
             }
         }
     }
-
-    private val securityIdToSymbol = mapOf(
-        48127 to "PE22000",
-        48129 to "PE22050",
-        48131 to "PE22100",
-        48133 to "PE22150",
-        48147 to "PE22200",
-        48150 to "PE22250",
-        48155 to "PE22300",
-        48169 to "PE22350",
-        48171 to "PE22400",
-        48173 to "PE22450",
-        48177 to "PE22500",
-        48179 to "PE22550",
-        48185 to "PE22600",
-        48187 to "PE22650",
-        48189 to "PE22700",
-        48197 to "PE22750",
-        48199 to "PE22800",
-        48201 to "PE22850",
-        48207 to "PE22900",
-        48209 to "PE22950",
-        48210 to "CE23000",
-        48211 to "PE23000",
-        48213 to "CE23050",
-        48218 to "CE23100",
-        48226 to "CE23150",
-        48229 to "CE23200",
-        48234 to "CE23250",
-        48236 to "CE23300",
-        48241 to "CE23350",
-        48249 to "CE23400",
-        48259 to "CE23450",
-        48264 to "CE23500",
-        48267 to "CE23550",
-        48269 to "CE23600",
-        48277 to "CE23650",
-        48282 to "CE23700",
-        48287 to "CE23750",
-        48289 to "CE23800",
-        48292 to "CE23850",
-        48294 to "CE23900",
-        48296 to "CE23950",
-        48298 to "CE24000"
-    )
 
     fun formatToHourMinute(unixTimestamp: Long): String {
         return if (unixTimestamp > 0) {

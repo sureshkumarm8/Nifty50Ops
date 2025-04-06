@@ -5,11 +5,17 @@ package com.example.nifty50ops
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -55,32 +61,50 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
+import com.example.nifty50ops.network.ApiService
 import com.example.nifty50ops.service.DataFetchService
 import com.example.nifty50ops.ui.theme.Nifty50OpsTheme
+import com.example.nifty50ops.utils.copyFromDownloadsToInternal
+import com.example.nifty50ops.utils.readJwtToken
+import com.example.nifty50ops.utils.readSecurityIdToSymbolMap
 import com.example.nifty50ops.view.AboutScreen
 import com.example.nifty50ops.view.MainScreen
 import com.example.nifty50ops.view.OptionsScreen
 import com.example.nifty50ops.view.SettingsScreen
 import com.example.nifty50ops.view.StockScreen
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         setContent {
             Nifty50OpsTheme {
                 MainWithDrawer(applicationContext)
             }
         }
-        requestForegroundServicePermissionIfNeeded()
+
+        createOptionDataFolderIfNeeded(this)
+
+        val internalFile = File(filesDir, "option_data/NiftyScrips.txt")
+
+        if (internalFile.exists()) {
+            Log.d("Init", "File exists. Proceeding.")
+        } else {
+            Log.d("Init", "File doesn't exist. Asking user to pick.")
+            launchFilePickerForNiftyFile()
+        }
+        readJwtToken(applicationContext)
+        waitForTxtFileAndStartService()
     }
 
+
     @Composable
-    fun AppDrawer(
-        onItemSelected: (String) -> Unit,
-        selectedItem: String = "main"
-    ) {
+    fun AppDrawer(onItemSelected: (String) -> Unit, selectedItem: String = "main") {
         val menuItems = listOf(
             DrawerItem("main", "🏠 Home"),
             DrawerItem("stocks", "📈 Stocks"),
@@ -287,5 +311,73 @@ class MainActivity : ComponentActivity() {
             // Notification permission granted
         }
     }
+
+    fun createOptionDataFolderIfNeeded(context: Context) {
+        val folder = File(context.filesDir, "option_data")
+        if (!folder.exists()) {
+            folder.mkdirs()
+            Log.d("AppInit", "Created folder: ${folder.absolutePath}")
+        }
+    }
+
+    private fun waitForTxtFileAndStartService() {
+        val handler = Handler(Looper.getMainLooper())
+        val file = File(filesDir, "option_data/NiftyScrips.txt")
+
+        val checkRunnable = object : Runnable {
+            override fun run() {
+                if (file.exists()) {
+                    Log.d("InitFlow", "NiftyScrips.txt found. Proceeding...")
+
+                    readJwtToken(this@MainActivity)
+                    val map = readSecurityIdToSymbolMap(this@MainActivity)
+
+                    requestForegroundServicePermissionIfNeeded() // Service starts after permission
+
+                } else {
+                    Log.d("InitFlow", "Waiting for NiftyScrips.txt...")
+                    handler.postDelayed(this, 1000) // Check again in 1 second
+                }
+            }
+        }
+
+        handler.post(checkRunnable)
+    }
+
+    private val filePickerLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            copyFromUriToInternal(this, uri)
+        } else {
+            Toast.makeText(this, "File not selected", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun launchFilePickerForNiftyFile() {
+        val mimeTypes = arrayOf("text/plain")
+        filePickerLauncher.launch(mimeTypes)
+    }
+
+    fun copyFromUriToInternal(context: Context, uri: Uri) {
+        try {
+            val inputStream = context.contentResolver.openInputStream(uri)
+            val dir = File(context.filesDir, "option_data")
+            if (!dir.exists()) dir.mkdirs()
+            val internalFile = File(dir, "NiftyScrips.txt")
+
+            inputStream?.use { input ->
+                FileOutputStream(internalFile).use { output ->
+                    input.copyTo(output)
+                }
+            }
+
+            Log.d("SAF", "File copied successfully to: ${internalFile.absolutePath}")
+            Toast.makeText(context, "NiftyScrips.txt imported", Toast.LENGTH_SHORT).show()
+
+        } catch (e: Exception) {
+            Log.e("SAF", "Failed to copy file: ${e.message}", e)
+            Toast.makeText(context, "Failed to import NiftyScrips.txt", Toast.LENGTH_SHORT).show()
+        }
+    }
+
 
 }

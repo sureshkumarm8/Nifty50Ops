@@ -10,16 +10,16 @@ import okhttp3.Request
 object ApiService {
 
     private val client = OkHttpClient()
+    var jwtToken: String? = null
 
     suspend fun fetchData(context: Context, prefs: String): String? {
         val apiUrl = "https://developer.paytmmoney.com/data/v1/price/live?mode=FULL&pref=$prefs"
-        val jwtToken = ""
 
         return withContext(Dispatchers.IO) {
             try {
                 val request = Request.Builder()
                     .url(apiUrl)
-                    .addHeader("x-jwt-token", jwtToken)
+                    .addHeader("x-jwt-token", jwtToken ?: "")
                     .build()
 
                 val response = client.newCall(request).execute()
