@@ -2,4 +2,10 @@
 <resources>
 
     <style name="Theme.Nifty50Ops" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.Nifty50Ops.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+    <style name="Theme.Nifty50Ops.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+    <style name="Theme.Nifty50Ops.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 </resources>

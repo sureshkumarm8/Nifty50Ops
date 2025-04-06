@@ -4,22 +4,23 @@
 //import androidx.room.Database
 //import androidx.room.Room
 //import androidx.room.RoomDatabase
+//import com.example.nifty50ops.model.OptionsEntity
 //import com.example.nifty50ops.model.StockEntity
 //
-//@Database(entities = [StockEntity::class], version = 1, exportSchema = false)
-//abstract class StockDatabase : RoomDatabase() {
-//    abstract fun stockDao(): StockDao
+//@Database(entities = [OptionsEntity::class], version = 1, exportSchema = false)
+//abstract class OptionsDatabase : RoomDatabase() {
+//    abstract fun optionsDao(): OptionsDao
 //
 //    companion object {
 //        @Volatile
-//        private var INSTANCE: StockDatabase? = null
+//        private var INSTANCE: OptionsDatabase? = null
 //
-//        fun getDatabase(context: Context): StockDatabase {
+//        fun getDatabase(context: Context): OptionsDatabase {
 //            return INSTANCE ?: synchronized(this) {
 //                val instance = Room.databaseBuilder(
 //                    context.applicationContext,
-//                    StockDatabase::class.java,
-//                    "stock_database"
+//                    OptionsDatabase::class.java,
+//                    "options_database"
 //                ).build()
 //                INSTANCE = instance
 //                instance

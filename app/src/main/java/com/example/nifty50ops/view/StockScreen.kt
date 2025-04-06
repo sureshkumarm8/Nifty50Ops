@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.nifty50ops.controller.StockController
-import com.example.nifty50ops.database.StockDatabase
+import com.example.nifty50ops.database.MarketDatabase
 import com.example.nifty50ops.model.StockEntity
 import com.example.nifty50ops.repository.StockRepository
 import kotlinx.coroutines.delay
@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun StockScreen(context: Context) {
-    val stockDao = StockDatabase.getDatabase(context).stockDao()
+    val stockDao = MarketDatabase.getDatabase(context).marketDao()
     val repository = StockRepository(stockDao)
     val controller = StockController(repository)
 
@@ -31,7 +31,7 @@ fun StockScreen(context: Context) {
 
     LaunchedEffect(Unit) {
         while (true) {
-            controller.fetchStockData()
+//            controller.fetchStockData(context)
             repository.getAllStocks().collectLatest { stockList = it }
             delay(60 * 1000)
         }
@@ -40,20 +40,20 @@ fun StockScreen(context: Context) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(12.dp)
+//            .padding(WindowInsets.systemBars.asPaddingValues())
     ) {
-        Text(
-            text = "📈 Nifty 50 Stock Updates",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(vertical = 12.dp)
-        )
+//        Text(
+//            text = "📈 Nifty 50 Stock Updates",
+//            style = MaterialTheme.typography.headlineMedium,
+//            fontWeight = FontWeight.Bold,
+//            color = MaterialTheme.colorScheme.primary,
+//            modifier = Modifier.padding(vertical = 12.dp)
+//        )
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 6.dp)
+                .padding(vertical = 10.dp)
                 .background(MaterialTheme.colorScheme.primaryContainer),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -63,6 +63,8 @@ fun StockScreen(context: Context) {
             TableHeaderCell("Sell Qty")
             TableHeaderCell("Buy %")
             TableHeaderCell("Sell %")
+            TableHeaderCell("BuyStr %")
+            TableHeaderCell("SellStr %")
         }
 
         Divider(color = Color.Gray, thickness = 1.dp)
@@ -95,10 +97,12 @@ fun StockTable(stockList: List<StockEntity>) {
             ) {
                 TableCell(stock.name, color = Color.Blue, weight = 2f)
                 TableCell("%.0f".format(stock.ltp), fontSize = 12.sp)
-                TableCell(stock.buyQty.toString())
-                TableCell(stock.sellQty.toString())
+                TableCell("%.2f".format(stock.buyQty.toDouble() / 100000))
+                TableCell("%.0f".format(stock.sellQty.toDouble() / 100000))
                 TableCell("%.0f%%".format(stock.buyDiffPercent), color = buyColor)
                 TableCell("%.0f%%".format(stock.sellDiffPercent), color = sellColor)
+                TableCell("%.0f%%".format(stock.buyStrengthPercent), color = buyColor)
+                TableCell("%.0f%%".format(stock.sellStrengthPercent), color = sellColor)
             }
 
             Divider(color = Color.LightGray)
