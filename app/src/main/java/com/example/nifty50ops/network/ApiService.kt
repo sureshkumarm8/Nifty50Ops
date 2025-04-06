@@ -13,7 +13,7 @@ object ApiService {
 
     suspend fun fetchData(context: Context, prefs: String): String? {
         val apiUrl = "https://developer.paytmmoney.com/data/v1/price/live?mode=FULL&pref=$prefs"
-        val jwtToken = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJtZXJjaGFudCIsImlzcyI6InBheXRtbW9uZXkiLCJpZCI6MTQyMjY0OCwiZXhwIjoxNzQzOTY0MTk5fQ.J8nUStVbQQTlXWwViaPYkrW-EAM0Y3NVR82Z-VEJ4pk"
+        val jwtToken = ""
 
         return withContext(Dispatchers.IO) {
             try {
