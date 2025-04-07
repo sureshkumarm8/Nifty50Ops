@@ -50,29 +50,38 @@ fun MainHeader(time: String, nifty: Double) {
 
 @Composable
 fun StockSummary(viewModel: MainViewModel) {
+    val buyPercent by viewModel.stockBuyPercent.collectAsState()
+    val sellPercent by viewModel.stockSellPercent.collectAsState()
+
     Text(
         text = "📊 Stocks Summary",
         fontSize = 18.sp,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.primary
     )
-    SummaryRow("Buy %", "${String.format("%.2f", viewModel.getStockBuyPercent())}%")
-    SummaryRow("Sell %", "${String.format("%.2f", viewModel.getStockSellPercent())}%")
+    SummaryRow("Buy %", "${String.format("%.2f", buyPercent)}%")
+    SummaryRow("Sell %", "${String.format("%.2f", sellPercent)}%")
 }
 
 @Composable
 fun OptionsSummary(viewModel: MainViewModel) {
+    val buyPercent by viewModel.optionsBuyPercent.collectAsState()
+    val sellPercent by viewModel.optionsSellPercent.collectAsState()
+    val volTraded by viewModel.optionsVol.collectAsState()
+    val oiQty by viewModel.optionsOI.collectAsState()
+    val oiChange by viewModel.optionsOIChange.collectAsState()
+
     Text(
         text = "📉 Options Summary",
         fontSize = 18.sp,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.primary
     )
-    SummaryRow("Volume Traded", viewModel.getOptionsVol().toString())
-    SummaryRow("Buy %", "${String.format("%.2f", viewModel.getOptionsBuyPercent())}%")
-    SummaryRow("Sell %", "${String.format("%.2f", viewModel.getOptionsSellPercent())}%")
-    SummaryRow("Open Interest", viewModel.getOptionsOI().toString())
-    SummaryRow("OI Change", viewModel.getOptionsOIChange().toString())
+    SummaryRow("Volume Traded", volTraded.toString())
+    SummaryRow("Buy %", "${String.format("%.2f", buyPercent)}%")
+    SummaryRow("Sell %", "${String.format("%.2f", sellPercent)}%")
+    SummaryRow("Open Interest", oiQty.toString())
+    SummaryRow("OI Change", String.format("%.2f", oiChange))
 }
 
 @Composable

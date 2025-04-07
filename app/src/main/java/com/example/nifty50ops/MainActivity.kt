@@ -102,7 +102,6 @@ class MainActivity : ComponentActivity() {
         waitForTxtFileAndStartService()
     }
 
-
     @Composable
     fun AppDrawer(onItemSelected: (String) -> Unit, selectedItem: String = "main") {
         val menuItems = listOf(
