@@ -1,13 +1,15 @@
 package com.example.nifty50ops.model
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "options_table",
-    primaryKeys = ["timestamp", "name"]
+    indices = [Index(value = ["timestamp", "name"], unique = true)]
 )
 data class OptionsEntity(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val timestamp: String,
     val name: String,
     val ltp: Double,

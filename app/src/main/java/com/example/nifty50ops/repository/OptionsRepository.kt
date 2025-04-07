@@ -7,5 +7,5 @@ import kotlinx.coroutines.flow.Flow
 
 class OptionsRepository(private val optionDao: MarketDao) {
     suspend fun insertOption(option: OptionsEntity) = optionDao.insertOption(option)
-    fun getAllOptions(): Flow<List<OptionsEntity>> = optionDao.getAllOptions()
+    fun getAllOptions(): Flow<List<OptionsEntity>> = optionDao.getLatestOptions()
 }

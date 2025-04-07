@@ -23,11 +23,17 @@ interface MarketDao {
     @Query("SELECT * FROM stock_table")
     fun getAllStocks(): Flow<List<StockEntity>>
 
+    @Query("SELECT * FROM stock_table WHERE timestamp = (SELECT MAX(timestamp) FROM stock_table) ORDER BY id ASC")
+    fun getLatestStocks(): Flow<List<StockEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertOption(option: OptionsEntity)
 
     @Query("SELECT * FROM options_table ORDER BY volTraded DESC")
     fun getAllOptions(): Flow<List<OptionsEntity>>
+
+    @Query("SELECT * FROM options_table WHERE timestamp = (SELECT MAX(timestamp) FROM options_table) ORDER BY volTraded DESC")
+    fun getLatestOptions(): Flow<List<OptionsEntity>>
 
     @Query("SELECT * FROM stock_table WHERE timestamp >= :startTime ORDER BY timestamp DESC")
     fun getStocksFromLastMinute(startTime: String): Flow<List<StockEntity>>

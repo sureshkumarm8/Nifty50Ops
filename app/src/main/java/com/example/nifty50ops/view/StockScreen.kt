@@ -98,11 +98,11 @@ fun StockTable(stockList: List<StockEntity>) {
                 TableCell(stock.name, color = Color.Blue, weight = 2f)
                 TableCell("%.0f".format(stock.ltp), fontSize = 12.sp)
                 TableCell("%.2f".format(stock.buyQty.toDouble() / 100000))
-                TableCell("%.0f".format(stock.sellQty.toDouble() / 100000))
-                TableCell("%.0f%%".format(stock.buyDiffPercent), color = buyColor)
-                TableCell("%.0f%%".format(stock.sellDiffPercent), color = sellColor)
-                TableCell("%.0f%%".format(stock.buyStrengthPercent), color = buyColor)
-                TableCell("%.0f%%".format(stock.sellStrengthPercent), color = sellColor)
+                TableCell("%.2f".format(stock.sellQty.toDouble() / 100000))
+                TableCell("%.1f".format(stock.buyDiffPercent), color = buyColor)
+                TableCell("%.1f".format(stock.sellDiffPercent), color = sellColor)
+                TableCell("%.1f".format(stock.buyStrengthPercent), color = buyColor)
+                TableCell("%.1f".format(stock.sellStrengthPercent), color = sellColor)
             }
 
             Divider(color = Color.LightGray)

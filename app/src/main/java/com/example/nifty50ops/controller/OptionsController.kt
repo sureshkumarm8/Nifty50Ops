@@ -41,7 +41,7 @@ class OptionsController(private val optionRepository: OptionsRepository) {
 
             val name = securityIdToSymbol[securityId] ?: "Unknown"
             val ltp = optionsObject.optDouble("last_price", 0.0)
-            val volTraded = optionsObject.optInt("total_buy_quantity", 0)
+            val volTraded = optionsObject.optInt("volume_traded", 0)
             val buyQty = optionsObject.optInt("total_buy_quantity", 0)
             val sellQty = optionsObject.optInt("total_sell_quantity", 0)
             val oiQty = optionsObject.optInt("oi", 0)

@@ -94,7 +94,6 @@ class StockController(private val stockRepository: StockRepository) {
         return stockList
     }
 
-
     private suspend fun saveToDatabase(stockEntities: List<StockEntity>) {
         withContext(Dispatchers.IO) {
             for (stock in stockEntities) {
@@ -104,16 +103,16 @@ class StockController(private val stockRepository: StockRepository) {
     }
 
     private val securityIdToSymbol = mapOf(
-        500180 to "HDFCBANK", 532174 to "ICICIBANK", 500325 to "RELIANCE", 1594 to "INFY", 500875 to "ITC",
-        500510 to "LT", 10604 to "BHARTIARTL", 11536 to "TCS", 5900 to "AXISBANK", 500520 to "M&M",
-        3045 to "SBIN", 1922 to "KOTAKBANK", 500696 to "HINDUNILVR", 7229 to "HCLTECH", 3351 to "SUNPHARMA",
-        500034 to "BAJFINANCE", 532500 to "MARUTI", 3456 to "TATAMOTORS", 532555 to "NTPC", 500114 to "TITAN",
-        14977 to "POWERGRID", 500312 to "ONGC", 532538 to "ULTRACEMCO", 500228 to "JSWSTEEL", 532977 to "BAJAJ-AUTO",
-        500470 to "TATASTEEL", 532978 to "BAJAJFINSV", 13538 to "TECHM", 500820 to "ASIANPAINT", 18143 to "JIOFIN",
-        500300 to "GRASIM", 15083 to "ADANIPORTS", 25 to "ADANIENT", 533278 to "COALINDIA", 500440 to "HINDALCO",
-        500124 to "DRREDDY", 3787 to "WIPRO", 694 to "CIPLA", 500790 to "NESTLEIND", 508869 to "APOLLOHOSP",
-        505200 to "EICHERMOT", 540777 to "HDFCLIFE", 540719 to "SBILIFE", 532187 to "INDUSINDBK", 500800 to "TATACONSUM",
-        500251 to "TRENT", 1348 to "HEROMOTOCO", 500049 to "BEL", 4306 to "SHRIRAMFIN", 5097 to "ZOMATO")
+        1333 to "HDFCBANK", 4963 to "ICICIBANK", 2885 to "RELIANCE", 1594 to "INFY", 1660 to "ITC",
+        11483 to "LT", 10604 to "BHARTIARTL", 11536 to "TCS", 5900 to "AXISBANK", 2031 to "M&M",
+        3045 to "SBIN", 1922 to "KOTAKBANK", 1394 to "HINDUNILVR", 7229 to "HCLTECH", 3351 to "SUNPHARMA",
+        317 to "BAJFINANCE", 10999 to "MARUTI", 3456 to "TATAMOTORS", 11630 to "NTPC", 3506 to "TITAN",
+        14977 to "POWERGRID", 2475 to "ONGC", 11532 to "ULTRACEMCO", 11723 to "JSWSTEEL", 16669 to "BAJAJ-AUTO",
+        3499 to "TATASTEEL", 16675 to "BAJAJFINSV", 13538 to "TECHM", 236 to "ASIANPAINT", 18143 to "JIOFIN",
+        1232 to "GRASIM", 15083 to "ADANIPORTS", 25 to "ADANIENT", 20374 to "COALINDIA", 1363 to "HINDALCO",
+        881 to "DRREDDY", 3787 to "WIPRO", 694 to "CIPLA", 17963 to "NESTLEIND", 157 to "APOLLOHOSP",
+        910 to "EICHERMOT", 467 to "HDFCLIFE", 21808 to "SBILIFE", 5258 to "INDUSINDBK", 3432 to "TATACONSUM",
+        1964 to "TRENT", 1348 to "HEROMOTOCO", 383 to "BEL", 4306 to "SHRIRAMFIN", 5097 to "ZOMATO")
 
     fun formatToHourMinute(unixTimestamp: Long): String {
         return if (unixTimestamp > 0) {

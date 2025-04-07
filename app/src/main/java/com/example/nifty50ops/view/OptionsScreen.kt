@@ -97,10 +97,10 @@ fun OptionsTable(optionList: List<OptionsEntity>) {
                 TableCell("%.2f".format(option.volTraded.toDouble() / 100000))
                 TableCell("%.2f".format(option.buyQty.toDouble() / 100000))
                 TableCell("%.2f".format(option.sellQty.toDouble() / 100000))
-                TableCell("%.0f%%".format(option.buyDiffPercent), color = buyColor)
-                TableCell("%.0f%%".format(option.sellDiffPercent), color = sellColor)
-                TableCell("%.0f%%".format(option.buyStrengthPercent), color = buyColor)
-                TableCell("%.0f%%".format(option.sellStrengthPercent), color = sellColor)
+                TableCell("%.1f".format(option.buyDiffPercent), color = buyColor)
+                TableCell("%.1f".format(option.sellDiffPercent), color = sellColor)
+                TableCell("%.1f".format(option.buyStrengthPercent), color = buyColor)
+                TableCell("%.1f".format(option.sellStrengthPercent), color = sellColor)
             }
 
             Divider(color = Color.LightGray)
