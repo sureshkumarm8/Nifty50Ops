@@ -6,7 +6,9 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.example.nifty50ops.model.MarketsEntity
 import com.example.nifty50ops.model.OptionsEntity
+import com.example.nifty50ops.model.OptionsSummaryEntity
 import com.example.nifty50ops.model.StockEntity
+import com.example.nifty50ops.model.StockSummaryEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -40,5 +42,17 @@ interface MarketDao {
 
     @Query("SELECT * FROM options_table WHERE timestamp >= :startTime ORDER BY timestamp DESC")
     fun getOptionsFromLastMinute(startTime: String): Flow<List<OptionsEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertStockSummary(summary: StockSummaryEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertOptionsSummary(summary: OptionsSummaryEntity)
+
+    @Query("SELECT * FROM stocksSummary_table ORDER BY lastUpdated DESC LIMIT 1")
+    fun getLatestStockSummary(): Flow<StockSummaryEntity>
+
+    @Query("SELECT * FROM optionsSummary_table ORDER BY lastUpdated DESC LIMIT 1")
+    fun getLatestOptionsSummary(): Flow<OptionsSummaryEntity>
 
 }

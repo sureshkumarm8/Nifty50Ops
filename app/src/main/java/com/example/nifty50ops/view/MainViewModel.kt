@@ -9,7 +9,9 @@ import com.example.nifty50ops.controller.StockController
 import com.example.nifty50ops.database.MarketDatabase
 import com.example.nifty50ops.model.MarketsEntity
 import com.example.nifty50ops.model.OptionsEntity
+import com.example.nifty50ops.model.OptionsSummaryEntity
 import com.example.nifty50ops.model.StockEntity
+import com.example.nifty50ops.model.StockSummaryEntity
 import com.example.nifty50ops.repository.MarketRepository
 import com.example.nifty50ops.repository.OptionsRepository
 import com.example.nifty50ops.repository.StockRepository
@@ -36,26 +38,11 @@ class MainViewModel(context: Context) : ViewModel() {
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
     // Summary StateFlows
-    private val _stockBuyPercent = MutableStateFlow(0.0)
-    val stockBuyPercent: StateFlow<Double> = _stockBuyPercent
+    private val _stockSummary = MutableStateFlow(StockSummaryEntity("", 0.0, 0.0, 0.0, 0.0))
+    val stockSummary: StateFlow<StockSummaryEntity> = _stockSummary
 
-    private val _stockSellPercent = MutableStateFlow(0.0)
-    val stockSellPercent: StateFlow<Double> = _stockSellPercent
-
-    private val _optionsBuyPercent = MutableStateFlow(0.0)
-    val optionsBuyPercent: StateFlow<Double> = _optionsBuyPercent
-
-    private val _optionsSellPercent = MutableStateFlow(0.0)
-    val optionsSellPercent: StateFlow<Double> = _optionsSellPercent
-
-    private val _optionsVol = MutableStateFlow(0)
-    val optionsVol: StateFlow<Int> = _optionsVol
-
-    private val _optionsOI = MutableStateFlow(0)
-    val optionsOI: StateFlow<Int> = _optionsOI
-
-    private val _optionsOIChange = MutableStateFlow(0.0)
-    val optionsOIChange: StateFlow<Double> = _optionsOIChange
+    private val _optionsSummary = MutableStateFlow(OptionsSummaryEntity("", 0, 0.0, 0.0, 0.0, 0.0))
+    val optionsSummary: StateFlow<OptionsSummaryEntity> = _optionsSummary
 
     init {
         observeData()
@@ -67,14 +54,41 @@ class MainViewModel(context: Context) : ViewModel() {
                 optionsRepo.getAllOptions()
             ) { stocks, options ->
 
-                _stockBuyPercent.value = stocks.map { it.buyDiffPercent }.averageOrZero()
-                _stockSellPercent.value = stocks.map { it.sellDiffPercent }.averageOrZero()
+                val stockBuyAvg = stocks.map { it.buyDiffPercent }.averageOrZero()
+                val stockSellAvg = stocks.map { it.sellDiffPercent }.averageOrZero()
+                val stockBuyStr = stocks.map { it.buyStrengthPercent }.averageOrZero()
+                val stockSellStr = stocks.map { it.sellStrengthPercent }.averageOrZero()
 
-                _optionsBuyPercent.value = options.map { it.buyDiffPercent }.averageOrZero()
-                _optionsSellPercent.value = options.map { it.sellDiffPercent }.averageOrZero()
-                _optionsVol.value = options.sumOf { it.volTraded }
-                _optionsOI.value = options.sumOf { it.oiQty }
-                _optionsOIChange.value = options.sumOf { it.oiChange }
+                val optionsBuyAvg = options.map { it.buyDiffPercent }.averageOrZero()
+                val optionsSellAvg = options.map { it.sellDiffPercent }.averageOrZero()
+                val optionsVolume = options.sumOf { it.volTraded }
+                val optionsBuyStr = stocks.map { it.buyStrengthPercent }.averageOrZero()
+                val optionsSellStr = stocks.map { it.sellStrengthPercent }.averageOrZero()
+
+                val stockTime = stocks.maxByOrNull { it.timestamp }?.timestamp.orEmpty()
+                val optionsTime = options.maxByOrNull { it.timestamp }?.timestamp.orEmpty()
+
+                val stockSummaryEntity = StockSummaryEntity(
+                    lastUpdated = stockTime,
+                    buyAvg = stockBuyAvg,
+                    sellAvg = stockSellAvg,
+                    stockBuyStr = stockBuyStr,
+                    stockSellStr = stockSellStr
+                )
+
+                val optionsSummaryEntity = OptionsSummaryEntity(
+                    lastUpdated = optionsTime,
+                    volumeTraded = optionsVolume,
+                    buyAvg = optionsBuyAvg,
+                    sellAvg = optionsSellAvg,
+                    optionsBuyStr = optionsBuyStr,
+                    optionsSellStr = optionsSellStr
+                )
+                marketRepo.insertStockSummary(stockSummaryEntity)
+                marketRepo.insertOptionsSummary(optionsSummaryEntity)
+
+                _stockSummary.value = stockSummaryEntity
+                _optionsSummary.value = optionsSummaryEntity
 
                 _uiState.update {
                     it.copy(

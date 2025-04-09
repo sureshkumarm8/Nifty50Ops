@@ -10,3 +10,21 @@ data class MarketsEntity(
     val ltp: Double
 )
 
+@Entity(tableName = "stocksSummary_table")
+data class StockSummaryEntity(
+    @PrimaryKey val lastUpdated: String,
+    val buyAvg: Double,
+    val sellAvg: Double,
+    val stockBuyStr : Double,
+    val stockSellStr : Double
+)
+
+@Entity(tableName = "optionsSummary_table")
+data class OptionsSummaryEntity(
+    @PrimaryKey val lastUpdated: String,
+    val volumeTraded: Int,
+    val buyAvg: Double,
+    val sellAvg: Double,
+    val optionsBuyStr : Double,
+    val optionsSellStr : Double
+)

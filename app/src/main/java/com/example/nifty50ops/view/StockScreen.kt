@@ -42,14 +42,6 @@ fun StockScreen(context: Context) {
             .fillMaxSize()
 //            .padding(WindowInsets.systemBars.asPaddingValues())
     ) {
-//        Text(
-//            text = "📈 Nifty 50 Stock Updates",
-//            style = MaterialTheme.typography.headlineMedium,
-//            fontWeight = FontWeight.Bold,
-//            color = MaterialTheme.colorScheme.primary,
-//            modifier = Modifier.padding(vertical = 12.dp)
-//        )
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
