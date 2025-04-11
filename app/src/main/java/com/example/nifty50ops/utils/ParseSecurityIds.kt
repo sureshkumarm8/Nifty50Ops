@@ -3,7 +3,6 @@ package com.example.nifty50ops.utils
 import android.content.Context
 import android.os.Environment
 import android.util.Log
-import android.widget.Toast
 import com.example.nifty50ops.network.ApiService
 import java.io.File
 
@@ -72,4 +71,6 @@ fun copyFromDownloadsToInternal(context: Context): Boolean {
     }
 }
 
-
+fun convertToLacsString(value: Int): String {
+    return if (value >= 100000) "${"%.2f".format(value / 100000.0)}L" else value.toString()
+}

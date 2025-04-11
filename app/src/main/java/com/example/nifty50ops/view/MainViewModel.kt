@@ -44,6 +44,7 @@ class MainViewModel(context: Context) : ViewModel() {
     private val _optionsSummary = MutableStateFlow(OptionsSummaryEntity("", 0, 0.0, 0.0, 0.0, 0.0))
     val optionsSummary: StateFlow<OptionsSummaryEntity> = _optionsSummary
 
+
     init {
         observeData()
     }

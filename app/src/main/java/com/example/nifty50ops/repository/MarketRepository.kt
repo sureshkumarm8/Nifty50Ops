@@ -15,4 +15,8 @@ class MarketRepository(private val marketDao: MarketDao) {
     suspend fun insertOptionsSummary(optionsummary: OptionsSummaryEntity) = marketDao.insertOptionsSummary(optionsummary)
     fun getLatestOptionsSummary(): Flow<OptionsSummaryEntity> = marketDao.getLatestOptionsSummary()
 
+    fun getAllStockSummary(): Flow<List<StockSummaryEntity>> = marketDao.getAllStockSummary()
+    fun getAllOptionsSummary(): Flow<List<OptionsSummaryEntity>> = marketDao.getAllOptionsSummary()
+
+
 }

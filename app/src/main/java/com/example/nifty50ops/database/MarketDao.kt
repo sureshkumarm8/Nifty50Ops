@@ -19,8 +19,13 @@ interface MarketDao {
     @Query("SELECT * FROM market_table ORDER BY timestamp DESC")
     fun getAllMarketData(): Flow<List<MarketsEntity>>
 
+
+//StocksScreen
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertStock(stock: StockEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertStockSummary(summary: StockSummaryEntity)
 
     @Query("SELECT * FROM stock_table")
     fun getAllStocks(): Flow<List<StockEntity>>
@@ -28,8 +33,25 @@ interface MarketDao {
     @Query("SELECT * FROM stock_table WHERE timestamp = (SELECT MAX(timestamp) FROM stock_table) ORDER BY id ASC")
     fun getLatestStocks(): Flow<List<StockEntity>>
 
+    @Query("SELECT * FROM stock_table WHERE name = :name ORDER BY timestamp ASC")
+    fun getStockHistory(name: String): Flow<List<StockEntity>>
+
+    @Query("SELECT * FROM stock_table WHERE timestamp >= :startTime ORDER BY timestamp DESC")
+    fun getStocksFromLastMinute(startTime: String): Flow<List<StockEntity>>
+
+    @Query("SELECT * FROM stocksSummary_table ORDER BY lastUpdated DESC LIMIT 1")
+    fun getLatestStockSummary(): Flow<StockSummaryEntity>
+
+    @Query("SELECT * FROM stocksSummary_table ORDER BY lastUpdated")
+    fun getAllStockSummary(): Flow<List<StockSummaryEntity>>
+
+
+   //OptionsScreen
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertOption(option: OptionsEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertOptionsSummary(summary: OptionsSummaryEntity)
 
     @Query("SELECT * FROM options_table ORDER BY volTraded DESC")
     fun getAllOptions(): Flow<List<OptionsEntity>>
@@ -37,22 +59,19 @@ interface MarketDao {
     @Query("SELECT * FROM options_table WHERE timestamp = (SELECT MAX(timestamp) FROM options_table) ORDER BY volTraded DESC")
     fun getLatestOptions(): Flow<List<OptionsEntity>>
 
-    @Query("SELECT * FROM stock_table WHERE timestamp >= :startTime ORDER BY timestamp DESC")
-    fun getStocksFromLastMinute(startTime: String): Flow<List<StockEntity>>
-
     @Query("SELECT * FROM options_table WHERE timestamp >= :startTime ORDER BY timestamp DESC")
     fun getOptionsFromLastMinute(startTime: String): Flow<List<OptionsEntity>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertStockSummary(summary: StockSummaryEntity)
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertOptionsSummary(summary: OptionsSummaryEntity)
-
-    @Query("SELECT * FROM stocksSummary_table ORDER BY lastUpdated DESC LIMIT 1")
-    fun getLatestStockSummary(): Flow<StockSummaryEntity>
+    @Query("SELECT * FROM options_table WHERE name = :name ORDER BY timestamp ASC")
+    fun getOptionHistory(name: String): Flow<List<OptionsEntity>>
 
     @Query("SELECT * FROM optionsSummary_table ORDER BY lastUpdated DESC LIMIT 1")
     fun getLatestOptionsSummary(): Flow<OptionsSummaryEntity>
+
+    @Query("SELECT * FROM optionsSummary_table ORDER BY lastUpdated")
+    fun getAllOptionsSummary(): Flow<List<OptionsSummaryEntity>>
+
+
+
 
 }

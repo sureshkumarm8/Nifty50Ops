@@ -16,7 +16,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,11 +25,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.sharp.Menu
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -54,24 +50,28 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
-import com.example.nifty50ops.network.ApiService
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.example.nifty50ops.service.DataFetchService
 import com.example.nifty50ops.ui.theme.Nifty50OpsTheme
-import com.example.nifty50ops.utils.copyFromDownloadsToInternal
 import com.example.nifty50ops.utils.readJwtToken
 import com.example.nifty50ops.utils.readSecurityIdToSymbolMap
 import com.example.nifty50ops.view.AboutScreen
 import com.example.nifty50ops.view.MainScreen
+import com.example.nifty50ops.view.MainViewModel
+import com.example.nifty50ops.view.OptionHistoryScreen
 import com.example.nifty50ops.view.OptionsScreen
+import com.example.nifty50ops.view.OptionsSummaryHistoryScreen
 import com.example.nifty50ops.view.SettingsScreen
+import com.example.nifty50ops.view.StockHistoryScreen
 import com.example.nifty50ops.view.StockScreen
+import com.example.nifty50ops.view.StockSummaryHistoryScreen
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
@@ -100,6 +100,7 @@ class MainActivity : ComponentActivity() {
         }
         readJwtToken(applicationContext)
         waitForTxtFileAndStartService()
+
     }
 
     @Composable
@@ -185,27 +186,35 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+
     }
 
     data class DrawerItem(val key: String, val label: String)
 
     @Composable
     fun MainWithDrawer(context: Context) {
+        val navController = rememberNavController()
         val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
         val coroutineScope = rememberCoroutineScope()
 
         var selectedItem by remember { mutableStateOf("main") }
-        var title by remember { mutableStateOf("Nifty 50 Ops") }
 
-        val updateTitle: (String) -> String = {
-            when (it) {
-                "main" -> "🏠 Nifty 50 Ops"
-                "stocks" -> "📈 Nifty 50 Stock Updates"
-                "options" -> "📊 Weekly Nifty 50 Options"
-                "settings" -> "⚙️ Settings"
-                "about" -> "ℹ️ About"
-                else -> "📊 Nifty 50 OPS"
-            }
+        val navBackStackEntry by navController.currentBackStackEntryAsState()
+        val currentRoute = navBackStackEntry?.destination?.route
+        val optionName = navBackStackEntry?.arguments?.getString("optionName")
+        val stockName = navBackStackEntry?.arguments?.getString("stockName")
+
+        val title = when {
+            currentRoute?.startsWith("option_history/") == true -> "📊 $optionName"
+            currentRoute?.startsWith("stock_history/") == true -> "📈 $stockName"
+            currentRoute == "main" -> "🏠 Nifty 50 Ops"
+            currentRoute == "stocks" -> "📈 Nifty 50 Stock Updates"
+            currentRoute == "options" -> "📊 Weekly Nifty 50 Options"
+            currentRoute == "settings" -> "⚙️ Settings"
+            currentRoute == "about" -> "ℹ️ About"
+            currentRoute == "options_summary_history" -> "📊 Options Summary History"
+            currentRoute == "stock_summary_history" -> "📈 Stock Summary History"
+            else -> "📊 Nifty 50 OPS"
         }
 
         ModalNavigationDrawer(
@@ -215,7 +224,12 @@ class MainActivity : ComponentActivity() {
                     selectedItem = selectedItem,
                     onItemSelected = { item ->
                         selectedItem = item
-                        title = updateTitle(item)
+                        if (navController.currentDestination?.route != item) {
+                            navController.navigate(item) {
+                                launchSingleTop = true // Prevent duplicates
+                                restoreState = true
+                            }
+                        }
                         coroutineScope.launch { drawerState.close() }
                     }
                 )
@@ -243,7 +257,7 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = Color(0xFF2196F3) // AppBar blue
+                            containerColor = Color(0xFF2196F3)
                         )
                     )
                 }
@@ -253,12 +267,25 @@ class MainActivity : ComponentActivity() {
                         .padding(paddingValues)
                         .fillMaxSize()
                 ) {
-                    when (selectedItem) {
-                        "main" -> MainScreen(context)
-                        "stocks" -> StockScreen(context)
-                        "options" -> OptionsScreen(context)
-                        "settings" -> SettingsScreen(context)
-                        "about" -> AboutScreen(context)
+                    NavHost(navController = navController, startDestination = "main") {
+                        composable("main") {
+                            MainScreen(context, navController)
+                        }
+                        composable("stocks") { StockScreen(context, navController) }
+                        composable("options") { OptionsScreen(context, navController) }
+                        composable("settings") { SettingsScreen(context) }
+                        composable("about") { AboutScreen(context) }
+                        composable("stock_summary_history") { StockSummaryHistoryScreen(context) }
+                        composable("options_summary_history") { OptionsSummaryHistoryScreen(context) }
+
+                        composable("stock_history/{stockName}") { backStackEntry ->
+                            val stock = backStackEntry.arguments?.getString("stockName") ?: ""
+                            StockHistoryScreen(context, stock)
+                        }
+                        composable("option_history/{optionName}") { backStackEntry ->
+                            val option = backStackEntry.arguments?.getString("optionName") ?: ""
+                            OptionHistoryScreen(context, option)
+                        }
                     }
                 }
             }
@@ -377,6 +404,5 @@ class MainActivity : ComponentActivity() {
             Toast.makeText(context, "Failed to import NiftyScrips.txt", Toast.LENGTH_SHORT).show()
         }
     }
-
 
 }

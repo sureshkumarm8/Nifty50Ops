@@ -2,9 +2,11 @@ package com.example.nifty50ops.view
 
 import android.content.Context
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -12,15 +14,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.example.nifty50ops.controller.OptionsController
 import com.example.nifty50ops.database.MarketDatabase
 import com.example.nifty50ops.model.OptionsEntity
 import com.example.nifty50ops.repository.OptionsRepository
+import com.example.nifty50ops.utils.convertToLacsString
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
-fun OptionsScreen(context: Context) {
+fun OptionsScreen(context: Context, navController: NavController) {
     val optionsDao = MarketDatabase.getDatabase(context).marketDao()
     val repository = OptionsRepository(optionsDao)
     val controller = OptionsController(repository)
@@ -29,7 +38,6 @@ fun OptionsScreen(context: Context) {
 
     LaunchedEffect(Unit) {
         while (true) {
-//            controller.fetchOptionsData(context)
             repository.getAllOptions().collectLatest { optionsList = it }
             delay(60 * 1000)
         }
@@ -38,16 +46,7 @@ fun OptionsScreen(context: Context) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-//            .padding(WindowInsets.systemBars.asPaddingValues())
     ) {
-//        Text(
-//            text = "📈 Weekly Nifty 50 Options",
-//            style = MaterialTheme.typography.headlineMedium,
-//            fontWeight = FontWeight.Bold,
-//            color = MaterialTheme.colorScheme.primary,
-//            modifier = Modifier.padding(vertical = 12.dp)
-//        )
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -67,29 +66,33 @@ fun OptionsScreen(context: Context) {
 
         Divider(color = Color.Gray, thickness = 1.dp)
 
-        OptionsTable(optionsList)
+        // ✅ pass lambda to navigate on click
+        OptionsTable(optionList = optionsList) { optionName ->
+            navController.navigate("option_history/$optionName")
+        }
     }
 }
 
 @Composable
-fun OptionsTable(optionList: List<OptionsEntity>) {
+fun OptionsTable(optionList: List<OptionsEntity>, onRowClick: (String) -> Unit) {
     LazyColumn {
         items(optionList) { option ->
             val buyColor = when {
-                option.buyDiffPercent > 0 -> Color(0xFF2E7D32) // Green
-                option.buyDiffPercent < 0 -> Color(0xFFC62828) // Red
+                option.buyDiffPercent > 0 -> Color(0xFF2E7D32)
+                option.buyDiffPercent < 0 -> Color(0xFFC62828)
                 else -> Color.Gray
             }
 
             val sellColor = when {
-                option.sellDiffPercent > 0 -> Color(0xFFC62828) // Red
-                option.sellDiffPercent < 0 -> Color(0xFF2E7D32) // Green
+                option.sellDiffPercent > 0 -> Color(0xFFC62828)
+                option.sellDiffPercent < 0 -> Color(0xFF2E7D32)
                 else -> Color.Gray
             }
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .clickable { onRowClick(option.name) } // ✅ handle click here
                     .padding(vertical = 2.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -107,3 +110,85 @@ fun OptionsTable(optionList: List<OptionsEntity>) {
         }
     }
 }
+
+@Composable
+fun OptionHistoryScreen(context: Context, optionName: String) {
+    val dao = MarketDatabase.getDatabase(context).marketDao()
+    val repository = OptionsRepository(dao)
+
+    var optionHistory by remember { mutableStateOf<List<OptionsEntity>>(emptyList()) }
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(optionName) {
+        repository.getOptionHistory(optionName).collectLatest { newList ->
+            optionHistory = newList
+
+            // Wait for LazyColumn to recompute its size
+            snapshotFlow { listState.layoutInfo.totalItemsCount }
+                .filter { it > 0 }
+                .first()
+
+            // Scroll to the bottom item
+            listState.animateScrollToItem(newList.lastIndex)
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(8.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.primaryContainer)
+                .padding(vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TableHeaderCell("Time")
+            TableHeaderCell("Buy Qty")
+            TableHeaderCell("Sell Qty")
+            TableHeaderCell("Buy %")
+            TableHeaderCell("Sell %")
+            TableHeaderCell("BuyStr %")
+            TableHeaderCell("SellStr %")
+        }
+
+        Divider(color = Color.Gray, thickness = 1.dp)
+
+        LazyColumn(state = listState) {
+            items(optionHistory) { option ->
+                val timeStr = option.timestamp
+                val buyColor = when {
+                    option.buyDiffPercent > 0 -> Color(0xFF2E7D32)
+                    option.buyDiffPercent < 0 -> Color(0xFFC62828)
+                    else -> Color.Gray
+                }
+                val sellColor = when {
+                    option.sellDiffPercent > 0 -> Color(0xFFC62828)
+                    option.sellDiffPercent < 0 -> Color(0xFF2E7D32)
+                    else -> Color.Gray
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TableCell(timeStr)
+                    TableCell(convertToLacsString(option.buyQty))
+                    TableCell(convertToLacsString(option.sellQty))
+                    TableCell("%.1f".format(option.buyDiffPercent), color = buyColor)
+                    TableCell("%.1f".format(option.sellDiffPercent), color = sellColor)
+                    TableCell("%.1f".format(option.buyStrengthPercent), color = buyColor)
+                    TableCell("%.1f".format(option.sellStrengthPercent), color = sellColor)
+                }
+
+                Divider(color = Color.LightGray)
+            }
+        }
+    }
+}
+
+
