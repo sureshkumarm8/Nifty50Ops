@@ -27,6 +27,7 @@ import com.example.nifty50ops.model.StockEntity
 import com.example.nifty50ops.repository.OptionsRepository
 import com.example.nifty50ops.repository.StockRepository
 import com.example.nifty50ops.utils.convertToLacsString
+import com.example.nifty50ops.utils.twoDecimalDisplay
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -37,7 +38,7 @@ fun SnapshotSection(title: String, content: @Composable () -> Unit) {
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF2196F3),
-            modifier = Modifier.padding(bottom = 4.dp)
+            modifier = Modifier.padding(bottom = 1.dp)
         )
         content()
     }
@@ -52,9 +53,15 @@ fun StockSnapshot(context: Context) {
     }
 
     SnapshotCard(
-        headers = listOf("Name", "Buy", "Sell", "Buy%", "Sell%", "BuyStr%", "SellStr%"),
+        headers = listOf("Name", "Buy", "Sell", "Buy%", "Sell%", "BuyStr", "SellStr"),
         rows = stockList.map {
-            listOf(it.name.take(5), it.buyQty.toString(), it.sellQty.toString(),it.buyDiffPercent.toString(),it.sellDiffPercent.toString(),it.buyStrengthPercent.toString(),it.sellStrengthPercent.toString())
+            listOf(it.name.take(8),
+                convertToLacsString(it.buyQty),
+                convertToLacsString(it.sellQty),
+                twoDecimalDisplay(it.buyDiffPercent),
+                twoDecimalDisplay(it.sellDiffPercent),
+                twoDecimalDisplay(it.buyStrengthPercent),
+                twoDecimalDisplay(it.sellStrengthPercent))
         }
     )
 }
@@ -68,16 +75,16 @@ fun OptionsSnapshot(context: Context) {
     }
 
     SnapshotCard(
-        headers = listOf("Name", "Buy", "Sell", "Buy%", "Sell%", "BuyStr%", "SellStr%"),
+        headers = listOf("Name ", "Buy", "Sell", "Buy%", "Sell%", "BuyStr", "SellStr"),
         rows = optionsList.map {
             listOf(
-                it.name.take(6),
+                it.name.take(7),
                 convertToLacsString(it.buyQty),
                 convertToLacsString(it.sellQty),
-                it.buyDiffPercent.toString(),
-                it.sellDiffPercent.toString(),
-                it.buyStrengthPercent.toString(),
-                it.sellStrengthPercent.toString()
+                twoDecimalDisplay(it.buyDiffPercent),
+                twoDecimalDisplay(it.sellDiffPercent),
+                twoDecimalDisplay(it.buyStrengthPercent),
+                twoDecimalDisplay(it.sellStrengthPercent)
             )
         }
     )
@@ -87,28 +94,32 @@ fun OptionsSnapshot(context: Context) {
 fun SnapshotCard(headers: List<String>, rows: List<List<String>>) {
     val cardColor = Color(0xFFBBDEFB) // lighter version of 0xFF2196F3
 
+    // Define weights: give Name column more width
+    val columnWeights = listOf(1.5f, 1f, 1f, 1f, 1f, 1f, 1f)
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(220.dp),
+            .height(200.dp),
         colors = CardDefaults.cardColors(containerColor = cardColor),
-        elevation = CardDefaults.cardElevation(4.dp)
+        elevation = CardDefaults.cardElevation(1.dp)
     ) {
-        Column(modifier = Modifier.padding(8.dp)) {
+        Column(modifier = Modifier.padding(1.dp)) {
             // Header row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp),
+                    .padding(vertical = 4.dp, horizontal = 4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                headers.forEach { header ->
+                headers.forEachIndexed { index, header ->
                     Text(
                         text = header,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(columnWeights.getOrElse(index) { 1f }),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0D47A1)
+                        color = Color(0xFF0D47A1),
+                        maxLines = 1
                     )
                 }
             }
@@ -117,21 +128,24 @@ fun SnapshotCard(headers: List<String>, rows: List<List<String>>) {
 
             // Scrollable content
             LazyColumn(
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
                     .weight(1f)
             ) {
                 items(rows) { row ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp),
+                            .padding(vertical = 4.dp, horizontal = 4.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        row.forEach { cell ->
+                        row.forEachIndexed { index, cell ->
                             Text(
                                 text = cell,
-                                modifier = Modifier.weight(1f),
-                                fontSize = 13.sp
+                                modifier = Modifier.weight(columnWeights.getOrElse(index) { 1f }),
+                                fontSize = 13.sp,
+                                color = Color(0xFF0D47A1),
+                                maxLines = 1
                             )
                         }
                     }
@@ -140,3 +154,4 @@ fun SnapshotCard(headers: List<String>, rows: List<List<String>>) {
         }
     }
 }
+

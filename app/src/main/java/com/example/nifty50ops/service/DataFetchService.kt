@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import com.example.nifty50ops.MainActivity
 import com.example.nifty50ops.R
@@ -25,10 +26,17 @@ class DataFetchService : Service() {
     private lateinit var optionsController: OptionsController
     private lateinit var stockController: StockController
     private lateinit var marketController: MarketController
+    private lateinit var wakeLock: PowerManager.WakeLock
 
     override fun onCreate() {
         super.onCreate()
         println("Service created")
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        wakeLock = powerManager.newWakeLock(
+            PowerManager.PARTIAL_WAKE_LOCK,
+            "DataFetchService::WakelockTag"
+        )
+        wakeLock.acquire()
         readJwtToken(this)
 
 //        val db1 = StockDatabase.getDatabase(applicationContext)
@@ -90,7 +98,6 @@ class DataFetchService : Service() {
         startForeground(1, notification)
     }
 
-
     private fun startFetchingLoop() {
         serviceScope.launch {
             while (true) {
@@ -120,13 +127,22 @@ class DataFetchService : Service() {
         val isWeekday = dayOfWeek in Calendar.MONDAY..Calendar.FRIDAY
         val isMarketHours = (hour > 9 || (hour == 9 && minute >= 15)) && (hour < 15 || (hour == 15 && minute <= 30))
 
-//        return isWeekday && isMarketHours
-        return true
+        return isWeekday && isMarketHours
+//        return true
     }
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        println("Service onStartCommand called")
+        return START_STICKY // Important to restart service if killed
+    }
+
+
     override fun onBind(intent: Intent?): IBinder? = null
+
     override fun onDestroy() {
         super.onDestroy()
         serviceScope.cancel()
+        if (wakeLock.isHeld) wakeLock.release()
     }
+
 }

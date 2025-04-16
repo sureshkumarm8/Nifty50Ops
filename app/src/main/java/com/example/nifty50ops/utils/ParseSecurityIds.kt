@@ -74,3 +74,7 @@ fun copyFromDownloadsToInternal(context: Context): Boolean {
 fun convertToLacsString(value: Int): String {
     return if (value >= 100000) "${"%.2f".format(value / 100000.0)}L" else value.toString()
 }
+
+fun twoDecimalDisplay(value: Double): String {
+    return("%.2f".format(value))
+}

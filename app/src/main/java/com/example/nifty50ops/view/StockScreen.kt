@@ -23,6 +23,7 @@ import com.example.nifty50ops.model.StockEntity
 import com.example.nifty50ops.model.StockSummaryEntity
 import com.example.nifty50ops.repository.MarketRepository
 import com.example.nifty50ops.repository.StockRepository
+import com.example.nifty50ops.utils.convertToLacsString
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
@@ -207,8 +208,8 @@ fun StockHistoryScreen(context: Context, stockName: String) {
                 ) {
                     TableCell(stock.timestamp)
                     TableCell(stock.ltp.toString())
-                    TableCell(stock.buyQty.toString())
-                    TableCell(stock.sellQty.toString())
+                    TableCell(convertToLacsString(stock.buyQty))
+                    TableCell(convertToLacsString(stock.sellQty))
                     TableCell("%.1f".format(stock.buyDiffPercent), color = buyColor)
                     TableCell("%.1f".format(stock.sellDiffPercent), color = sellColor)
                     TableCell("%.1f".format(stock.buyStrengthPercent), color = buyColor)

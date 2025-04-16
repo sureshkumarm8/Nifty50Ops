@@ -32,9 +32,9 @@ fun MainScreen(context: Context, navController: NavController) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         MainHeader(uiState.currentTime, uiState.niftyPrice)
         Spacer(modifier = Modifier.height(12.dp))
-        StockSummary(viewModel, navController)
+        StockSummary(context, navController)
         Spacer(modifier = Modifier.height(12.dp))
-        OptionsSummary(viewModel, navController)
+        OptionsSummary(context, navController)
         Spacer(modifier = Modifier.height(20.dp))
         SnapshotSection("📦 Stocks Snapshot") { StockSnapshot(context) }
         Spacer(modifier = Modifier.height(16.dp))
