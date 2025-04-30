@@ -3,6 +3,7 @@ package com.example.nifty50ops.utils
 import android.content.Context
 import android.os.Environment
 import android.util.Log
+import androidx.compose.ui.graphics.Color
 import com.example.nifty50ops.network.ApiService
 import java.io.File
 
@@ -72,9 +73,18 @@ fun copyFromDownloadsToInternal(context: Context): Boolean {
 }
 
 fun convertToLacsString(value: Int): String {
-    return if (value >= 100000) "${"%.2f".format(value / 100000.0)}L" else value.toString()
+    return if (value >= 1000) "${"%.2f".format(value / 100000.0)}L" else value.toString()
 }
 
 fun twoDecimalDisplay(value: Double): String {
     return("%.2f".format(value))
+}
+
+fun setColorForHistory(stockAvg: Double): Color {
+    val setColor = when {
+        stockAvg > 0 -> Color(0xFF2E7D32) // Green
+        stockAvg < 0 -> Color(0xFFC62828) // Red
+        else -> Color.Gray
+    }
+    return setColor
 }
