@@ -19,6 +19,9 @@ interface MarketDao {
     @Query("SELECT * FROM market_table ORDER BY timestamp DESC")
     fun getAllMarketData(): Flow<List<MarketsEntity>>
 
+    @Query("SELECT * FROM market_table ORDER BY timestamp DESC LIMIT 1")
+    fun getLatestMarketData(): Flow<MarketsEntity>
+
 
 //StocksScreen
     @Insert(onConflict = OnConflictStrategy.REPLACE)

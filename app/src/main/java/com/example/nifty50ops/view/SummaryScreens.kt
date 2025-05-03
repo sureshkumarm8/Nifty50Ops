@@ -3,7 +3,9 @@ package com.example.nifty50ops.view
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -11,9 +13,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
@@ -37,6 +41,7 @@ import androidx.navigation.NavController
 import com.example.nifty50ops.controller.OptionsController
 import com.example.nifty50ops.controller.StockController
 import com.example.nifty50ops.database.MarketDatabase
+import com.example.nifty50ops.model.MarketsEntity
 import com.example.nifty50ops.model.OptionsEntity
 import com.example.nifty50ops.model.OptionsSummaryEntity
 import com.example.nifty50ops.model.StockEntity
@@ -49,6 +54,48 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+
+@Composable
+fun SentimentSummary(context: Context, navController: NavController) {
+    val dao = MarketDatabase.getDatabase(context).marketDao()
+    val repository = MarketRepository(dao)
+
+    var stockSummary by remember { mutableStateOf<StockSummaryEntity?>(null) }
+    var optionSummary by remember { mutableStateOf<OptionsSummaryEntity?>(null) }
+    var marketSummary by remember { mutableStateOf<MarketsEntity?>(null) }
+
+    LaunchedEffect(Unit) {
+        launch {
+            repository.getLatestStockSummary().collect { stockSummary = it }
+        }
+        launch {
+            repository.getLatestOptionsSummary().collect { optionSummary = it }
+        }
+        launch {
+            repository.getLatestData().collect { marketSummary = it }
+        }
+    }
+
+    if (stockSummary != null && optionSummary != null && marketSummary != null) {
+        SummaryCard(
+            title = "📊 Sentiment Summary",
+            summaryItems = listOf(
+                "PtsDiff" to "%.2f".format(marketSummary!!.pointsChanged.toDouble()),
+                "St1" to "%.2f".format(stockSummary!!.lastMinSentiment),
+                "StAll" to "%.2f".format(stockSummary!!.overAllSentiment),
+                "Op1" to "%.2f".format(optionSummary!!.lastMinSentiment),
+                "OpAll" to "%.2f".format(optionSummary!!.overAllSentiment),
+                "OI1" to "%.2f".format(optionSummary!!.lastMinOIChange),
+                "OIChange" to "%.2f".format(optionSummary!!.overAllOIChange)
+            ),
+            onClick = {
+                navController.navigate("sentiment_summary_history")
+            }
+        )
+    }
+}
+
 
 @Composable
 fun StockSummary(context: Context, navController: NavController) {
@@ -70,8 +117,10 @@ fun StockSummary(context: Context, navController: NavController) {
                 "Time" to summary.lastUpdated,
                 "Buy Avg %" to "%.2f".format(summary.buyAvg),
                 "Sell Avg %" to "%.2f".format(summary.sellAvg),
-                "BuyStr " to "%.2f".format(summary.stockBuyStr),
-                "SellStr " to "%.2f".format(summary.stockSellStr)
+                "LastMin" to "%.2f".format(summary.lastMinSentiment),
+                "BuyStr" to "%.2f".format(summary.stockBuyStr),
+                "SellStr" to "%.2f".format(summary.stockSellStr),
+                "OverAll" to "%.2f".format(summary.overAllSentiment)
             ),
             onClick = {
                 navController.navigate("stock_summary_history")
@@ -100,8 +149,10 @@ fun OptionsSummary(context: Context, navController: NavController) {
                 "Time" to summary.lastUpdated,
                 "Buy Avg %" to "%.2f".format(summary.buyAvg),
                 "Sell Avg %" to "%.2f".format(summary.sellAvg),
+                "LastMin" to "%.2f".format(summary.lastMinSentiment),
                 "BuyStr " to "%.2f".format(summary.optionsBuyStr),
-                "SellStr " to "%.2f".format(summary.optionsSellStr)
+                "SellStr " to "%.2f".format(summary.optionsSellStr),
+                "OverAll" to "%.2f".format(summary.lastMinSentiment)
             ),
             onClick = {
                 navController.navigate("options_summary_history")
@@ -110,6 +161,35 @@ fun OptionsSummary(context: Context, navController: NavController) {
     }
 }
 
+@Composable
+fun OISummary(context: Context, navController: NavController) {
+    val dao = MarketDatabase.getDatabase(context).marketDao()
+    val repository = MarketRepository(dao)
+
+    var optionsSummary by remember { mutableStateOf<OptionsSummaryEntity?>(null) }
+
+    LaunchedEffect(Unit) {
+        repository.getLatestOptionsSummary().collect { summary ->
+            optionsSummary = summary
+        }
+    }
+
+    optionsSummary?.let { summary ->
+        SummaryCard(
+            title = "📉 OI Summary",
+            summaryItems = listOf(
+                "Time" to summary.lastUpdated,
+                "OI" to "%.2f".format(summary.buyAvg),
+                "OI Change" to "%.2f".format(summary.sellAvg),
+                "LastMin" to "%.2f".format(summary.lastMinSentiment),
+                "OverAll" to "%.2f".format(summary.lastMinSentiment)
+            ),
+            onClick = {
+                navController.navigate("oi_summary_history")
+            }
+        )
+    }
+}
 
 @Composable
 fun SummaryCard(title: String, summaryItems: List<Pair<String, String>>, onClick: (() -> Unit)? = null) {
@@ -158,6 +238,94 @@ fun SummaryCard(title: String, summaryItems: List<Pair<String, String>>, onClick
 }
 
 @Composable
+fun SentimentSummaryHistoryScreen(context: Context) {
+    val stockDao = MarketDatabase.getDatabase(context).marketDao()
+    val repository = MarketRepository(stockDao)
+
+    var stockList by remember { mutableStateOf<List<StockSummaryEntity>>(emptyList()) }
+    var optionList by remember { mutableStateOf<List<OptionsSummaryEntity>>(emptyList()) }
+    var marketList by remember { mutableStateOf<List<MarketsEntity>>(emptyList()) }
+
+
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(true) {
+        launch {
+            repository.getAllStockSummary().collectLatest { stockList = it }
+        }
+        launch {
+            repository.getAllOptionsSummary().collectLatest { optionList = it }
+        }
+        launch {
+            repository.getAllData().collectLatest { marketList = it }
+        }
+    }
+
+    val horizontalScrollState = rememberScrollState()
+
+    // Zip the three lists safely
+    val combinedList = remember(stockList, optionList, marketList) {
+        stockList
+            .zip(optionList) { stock, option -> stock to option }
+            .zip(marketList) { (stock, option), market -> Triple(stock, option, market) }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .horizontalScroll(horizontalScrollState)
+    ) {
+        Column(
+            modifier = Modifier
+                .width(600.dp) // Adjust width for more columns
+                .padding(horizontal = 8.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TableHeaderCell("Time")
+                TableHeaderCell("LTP")
+                TableHeaderCell("LTP Change")
+                TableHeaderCell("Stock 1Min")
+                TableHeaderCell("Stock OverAll")
+                TableHeaderCell("Options 1Min")
+                TableHeaderCell("Options OverAll")
+                TableHeaderCell("OI    1Min")
+                TableHeaderCell("OI Change")
+            }
+
+            Divider(color = Color.Gray, thickness = 1.dp)
+
+            LazyColumn(state = listState) {
+                items(combinedList) { (stock, option, market) ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TableCell(market.timestamp.take(5))
+                        TableCell(twoDecimalDisplay(market.ltp).take(5))
+                        TableCell(twoDecimalDisplay(market.pointsChanged.toDouble()))
+                        TableCell(twoDecimalDisplay(stock.lastMinSentiment))
+                        TableCell(twoDecimalDisplay(stock.overAllSentiment))
+                        TableCell(twoDecimalDisplay(option.lastMinSentiment))
+                        TableCell(twoDecimalDisplay(option.overAllSentiment))
+                        TableCell(twoDecimalDisplay(option.lastMinOIChange))
+                        TableCell(twoDecimalDisplay(option.overAllOIChange))
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
 fun StockSummaryHistoryScreen(context: Context) {
     val stockDao = MarketDatabase.getDatabase(context).marketDao()
     val repository = MarketRepository(stockDao)
@@ -188,10 +356,13 @@ fun StockSummaryHistoryScreen(context: Context) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             TableHeaderCell("Time")
+            TableHeaderCell("LTP")
             TableHeaderCell("Buy %")
             TableHeaderCell("Sell %")
+            TableHeaderCell("1Min")
             TableHeaderCell("BuyStr %")
             TableHeaderCell("SellStr %")
+            TableHeaderCell("Over All")
         }
 
         Divider(color = Color.Gray, thickness = 1.dp)
@@ -216,10 +387,13 @@ fun StockSummaryHistoryScreen(context: Context) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TableCell(item.lastUpdated.take(5))
+                    TableCell(twoDecimalDisplay(item.ltp).take(5))
                     TableCell(twoDecimalDisplay(item.buyAvg), color = buyColor)
                     TableCell(twoDecimalDisplay(item.sellAvg), color = sellColor)
+                    TableCell(twoDecimalDisplay(item.lastMinSentiment))
                     TableCell(twoDecimalDisplay(item.stockBuyStr), color = buyColor)
                     TableCell(twoDecimalDisplay(item.stockSellStr), color = sellColor)
+                    TableCell(twoDecimalDisplay(item.overAllSentiment))
                 }
             }
         }
@@ -257,10 +431,13 @@ fun OptionsSummaryHistoryScreen(context: Context) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             TableHeaderCell("Time")
+            TableHeaderCell("LTP")
             TableHeaderCell("Buy %")
             TableHeaderCell("Sell %")
+            TableHeaderCell("1Min")
             TableHeaderCell("BuyStr %")
             TableHeaderCell("SellStr %")
+            TableHeaderCell("Over All")
         }
 
         Divider(color = Color.Gray, thickness = 1.dp)
@@ -285,10 +462,84 @@ fun OptionsSummaryHistoryScreen(context: Context) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TableCell(item.lastUpdated.take(5))
+                    TableCell(twoDecimalDisplay(item.ltp).take(5))
                     TableCell(twoDecimalDisplay(item.buyAvg), color = buyColor)
                     TableCell(twoDecimalDisplay(item.sellAvg), color = sellColor)
+                    TableCell(twoDecimalDisplay(item.lastMinSentiment))
                     TableCell(twoDecimalDisplay(item.optionsBuyStr), color = buyColor)
                     TableCell(twoDecimalDisplay(item.optionsSellStr), color = sellColor)
+                    TableCell(twoDecimalDisplay(item.overAllSentiment))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun OISummaryHistoryScreen(context: Context) {
+    val optionsDao = MarketDatabase.getDatabase(context).marketDao()
+    val repository = MarketRepository(optionsDao)
+
+    var optionsList by remember { mutableStateOf<List<OptionsSummaryEntity>>(emptyList()) }
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(true) {
+        repository.getAllOptionsSummary().collectLatest { newList ->
+            optionsList = newList
+
+            snapshotFlow { listState.layoutInfo.totalItemsCount }
+                .filter { it > 0 }
+                .first()
+
+            listState.animateScrollToItem(newList.lastIndex)
+        }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 6.dp)
+                .background(MaterialTheme.colorScheme.primaryContainer),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TableHeaderCell("Time")
+            TableHeaderCell("LTP")
+            TableHeaderCell("OI")
+            TableHeaderCell("OI Change")
+            TableHeaderCell("1Min")
+            TableHeaderCell("OverAll")
+        }
+
+        Divider(color = Color.Gray, thickness = 1.dp)
+
+        LazyColumn(state = listState) {
+            items(optionsList) { item ->
+                val buyColor = when {
+                    item.optionsBuyStr > 0 -> Color(0xFF2E7D32) // Green
+                    item.optionsBuyStr < 0 -> Color(0xFFC62828) // Red
+                    else -> Color.Gray
+                }
+
+                val sellColor = when {
+                    item.optionsSellStr > 0 -> Color(0xFFC62828) // Red
+                    item.optionsSellStr < 0 -> Color(0xFF2E7D32) // Green
+                    else -> Color.Gray
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TableCell(item.lastUpdated.take(5))
+                    TableCell(twoDecimalDisplay(item.ltp).take(5))
+                    TableCell(twoDecimalDisplay(item.oiQty.toDouble()))
+                    TableCell(twoDecimalDisplay(item.oiChange))
+                    TableCell(twoDecimalDisplay(item.lastMinOIChange))
+                    TableCell(twoDecimalDisplay(item.overAllOIChange))
                 }
             }
         }

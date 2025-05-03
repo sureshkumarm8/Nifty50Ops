@@ -18,9 +18,13 @@ data class OptionsEntity(
     val volTraded: Int,
     val buyDiffPercent: Double = 0.0,
     val sellDiffPercent: Double = 0.0,
-    val buyStrengthPercent: Double,
-    val sellStrengthPercent: Double,
+    val lastMinSentiment: Double = 0.0,
+    val buyStrengthPercent : Double  = 0.0,
+    val sellStrengthPercent : Double = 0.0,
+    val overAllSentiment : Double = 0.0,
     val oiQty: Int,
     val oiChange: Double =0.0,
+    val lastMinOIChange: Double =0.0,
+    val overAllOIChange: Double =0.0
 
 )

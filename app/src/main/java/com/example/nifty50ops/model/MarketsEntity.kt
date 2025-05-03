@@ -7,24 +7,35 @@ import androidx.room.PrimaryKey
 data class MarketsEntity(
     @PrimaryKey val timestamp: String,
     val name: String,
-    val ltp: Double
+    val ltp: Double,
+    val pointsChanged: Int
 )
 
 @Entity(tableName = "stocksSummary_table")
 data class StockSummaryEntity(
     @PrimaryKey val lastUpdated: String,
+    val ltp: Double,
     val buyAvg: Double,
     val sellAvg: Double,
-    val stockBuyStr : Double,
-    val stockSellStr : Double
+    val lastMinSentiment: Double,
+    val stockBuyStr: Double,
+    val stockSellStr: Double,
+    val overAllSentiment: Double
 )
 
 @Entity(tableName = "optionsSummary_table")
 data class OptionsSummaryEntity(
     @PrimaryKey val lastUpdated: String,
+    val ltp: Double,
     val volumeTraded: Int,
     val buyAvg: Double,
     val sellAvg: Double,
+    val lastMinSentiment: Double,
     val optionsBuyStr : Double,
-    val optionsSellStr : Double
+    val optionsSellStr : Double,
+    val overAllSentiment: Double,
+    val oiQty : Long,
+    val oiChange : Double,
+    val lastMinOIChange : Double,
+    val overAllOIChange : Double
 )

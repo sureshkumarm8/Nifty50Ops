@@ -66,9 +66,11 @@ import com.example.nifty50ops.utils.readSecurityIdToSymbolMap
 import com.example.nifty50ops.view.AboutScreen
 import com.example.nifty50ops.view.MainScreen
 import com.example.nifty50ops.view.MainViewModel
+import com.example.nifty50ops.view.OISummaryHistoryScreen
 import com.example.nifty50ops.view.OptionHistoryScreen
 import com.example.nifty50ops.view.OptionsScreen
 import com.example.nifty50ops.view.OptionsSummaryHistoryScreen
+import com.example.nifty50ops.view.SentimentSummaryHistoryScreen
 import com.example.nifty50ops.view.SettingsScreen
 import com.example.nifty50ops.view.StockHistoryScreen
 import com.example.nifty50ops.view.StockScreen
@@ -213,8 +215,10 @@ class MainActivity : ComponentActivity() {
             currentRoute == "options" -> "📊 Weekly Nifty 50 Options"
             currentRoute == "settings" -> "⚙️ Settings"
             currentRoute == "about" -> "ℹ️ About"
-            currentRoute == "options_summary_history" -> "📊 Options Summary History"
+            currentRoute == "sentiment_summary_history" -> "📈 Sentiment Summary History"
             currentRoute == "stock_summary_history" -> "📈 Stock Summary History"
+            currentRoute == "options_summary_history" -> "📊 Options Summary History"
+            currentRoute == "oi_summary_history" -> "📊 OI Summary History"
             else -> "📊 Nifty 50 OPS"
         }
 
@@ -276,8 +280,10 @@ class MainActivity : ComponentActivity() {
                         composable("options") { OptionsScreen(context, navController) }
                         composable("settings") { SettingsScreen(context) }
                         composable("about") { AboutScreen(context) }
+                        composable("sentiment_summary_history") { SentimentSummaryHistoryScreen(context) }
                         composable("stock_summary_history") { StockSummaryHistoryScreen(context) }
                         composable("options_summary_history") { OptionsSummaryHistoryScreen(context) }
+                        composable("oi_summary_history") { OISummaryHistoryScreen(context) }
 
                         composable("stock_history/{stockName}") { backStackEntry ->
                             val stock = backStackEntry.arguments?.getString("stockName") ?: ""

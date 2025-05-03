@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 class MarketRepository(private val marketDao: MarketDao) {
     suspend fun insertEntity(option: MarketsEntity) = marketDao.insertMarketData(option)
     fun getAllData(): Flow<List<MarketsEntity>> = marketDao.getAllMarketData()
+    fun getLatestData(): Flow<MarketsEntity> = marketDao.getLatestMarketData()
 
     suspend fun insertStockSummary(stocksummary: StockSummaryEntity) = marketDao.insertStockSummary(stocksummary)
     fun getLatestStockSummary(): Flow<StockSummaryEntity> = marketDao.getLatestStockSummary()

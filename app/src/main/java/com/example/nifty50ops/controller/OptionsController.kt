@@ -51,6 +51,26 @@ class OptionsController(private val optionRepository: OptionsRepository) {
 
             val previous = previousOptionMap[name]
 
+            // Store first record
+            val first = firstOptionMap.getOrPut(name) {
+                OptionsEntity(
+                    timestamp = timestamp,
+                    name = name,
+                    ltp = ltp,
+                    buyQty = buyQty,
+                    sellQty = sellQty,
+                    volTraded = volTraded,
+                    buyDiffPercent = 0.0,
+                    sellDiffPercent = 0.0,
+                    lastMinSentiment = 0.0,
+                    buyStrengthPercent = 0.0,
+                    sellStrengthPercent = 0.0,
+                    overAllSentiment = 0.0,
+                    oiQty = oiQty,
+                    oiChange = oiChange
+                )
+            }
+
             val buyDiffPercent = previous?.let {
                 if (it.buyQty != 0) ((buyQty - it.buyQty).toDouble() / it.buyQty) * 100 else 0.0
             } ?: 0.0
@@ -59,23 +79,7 @@ class OptionsController(private val optionRepository: OptionsRepository) {
                 if (it.sellQty != 0) ((sellQty - it.sellQty).toDouble() / it.sellQty) * 100 else 0.0
             } ?: 0.0
 
-            // Store first record
-            val first = firstOptionMap.getOrPut(name) {
-                OptionsEntity(
-                    name = name,
-                    ltp = ltp,
-                    buyQty = buyQty,
-                    sellQty = sellQty,
-                    volTraded = volTraded,
-                    buyDiffPercent = 0.0,
-                    sellDiffPercent = 0.0,
-                    buyStrengthPercent = 0.0,
-                    sellStrengthPercent = 0.0,
-                    oiQty = oiQty,
-                    oiChange = oiChange,
-                    timestamp = timestamp
-                )
-            }
+            val lastMinSentiment = buyDiffPercent - sellDiffPercent
 
             val buyStrengthPercent = if (first.buyQty != 0) {
                 ((buyQty - first.buyQty).toDouble() / first.buyQty) * 100
@@ -85,7 +89,10 @@ class OptionsController(private val optionRepository: OptionsRepository) {
                 ((sellQty - first.sellQty).toDouble() / first.sellQty) * 100
             } else 0.0
 
+            val overAllSentiment = buyStrengthPercent - sellStrengthPercent
+
             val currentOption = OptionsEntity(
+                timestamp = timestamp,
                 name = name,
                 ltp = ltp,
                 buyQty = buyQty,
@@ -93,11 +100,13 @@ class OptionsController(private val optionRepository: OptionsRepository) {
                 volTraded = volTraded,
                 buyDiffPercent = buyDiffPercent,
                 sellDiffPercent = sellDiffPercent,
+                lastMinSentiment = lastMinSentiment,
                 buyStrengthPercent = buyStrengthPercent,
                 sellStrengthPercent = sellStrengthPercent,
+                overAllSentiment = overAllSentiment,
                 oiQty = oiQty,
-                oiChange = oiChange,
-                timestamp = timestamp
+                oiChange = oiChange
+
             )
 
             previousOptionMap[name] = currentOption

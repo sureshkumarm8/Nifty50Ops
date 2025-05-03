@@ -1,12 +1,8 @@
 package com.example.nifty50ops.view
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.nifty50ops.controller.MarketController
-import com.example.nifty50ops.controller.OptionsController
-import com.example.nifty50ops.controller.StockController
 import com.example.nifty50ops.database.MarketDatabase
 import com.example.nifty50ops.model.MarketsEntity
 import com.example.nifty50ops.model.OptionsEntity
@@ -36,10 +32,10 @@ class MainViewModel(context: Context) : ViewModel() {
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
-    private val _stockSummary = MutableStateFlow(StockSummaryEntity("", 0.0, 0.0, 0.0, 0.0))
+    private val _stockSummary = MutableStateFlow(StockSummaryEntity("", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0))
     val stockSummary: StateFlow<StockSummaryEntity> = _stockSummary
 
-    private val _optionsSummary = MutableStateFlow(OptionsSummaryEntity("", 0, 0.0, 0.0, 0.0, 0.0))
+    private val _optionsSummary = MutableStateFlow(OptionsSummaryEntity("", 0.0,0, 0.0, 0.0, 0.0, 0.0,0.0, 0.0,0,0.0,0.0,0.0))
     val optionsSummary: StateFlow<OptionsSummaryEntity> = _optionsSummary
 
     init {
@@ -48,10 +44,12 @@ class MainViewModel(context: Context) : ViewModel() {
 
     private fun observeData() {
         viewModelScope.launch {
-            stockRepo.getAllStocks().combine(
-                optionsRepo.getAllOptions()
-            ) { stocks, options ->
-                computeAndSaveSummary(stocks, options)
+            combine(
+                stockRepo.getAllStocks(),
+                optionsRepo.getAllOptions(),
+                marketRepo.getAllData()
+            ) { stocks, options, markets ->
+                computeAndSaveSummary(stocks, options, markets)
             }.launchIn(this)
 
             marketRepo.getAllData().collect { markets ->
@@ -69,37 +67,58 @@ class MainViewModel(context: Context) : ViewModel() {
 
     private suspend fun computeAndSaveSummary(
         stocks: List<StockEntity>,
-        options: List<OptionsEntity>
+        options: List<OptionsEntity>,
+        markets : List<MarketsEntity>
     ) {
         val stockBuyAvg = stocks.map { it.buyDiffPercent }.averageOrZero()
         val stockSellAvg = stocks.map { it.sellDiffPercent }.averageOrZero()
+        val stockLastMinSentiment = stocks.map { it.lastMinSentiment }.averageOrZero()
         val stockBuyStr = stocks.map { it.buyStrengthPercent }.averageOrZero()
         val stockSellStr = stocks.map { it.sellStrengthPercent }.averageOrZero()
+        val stocksOverAllSentiment = stocks.map { it.overAllSentiment }.averageOrZero()
 
         val optionsBuyAvg = options.map { it.buyDiffPercent }.averageOrZero()
         val optionsSellAvg = options.map { it.sellDiffPercent }.averageOrZero()
         val optionsVolume = options.sumOf { it.volTraded }
+        val optionsLastMinSentiment = options.map { it.lastMinSentiment }.averageOrZero()
         val optionsBuyStr = options.map { it.buyStrengthPercent }.averageOrZero()
         val optionsSellStr = options.map { it.sellStrengthPercent }.averageOrZero()
+        val optionsOverAllSentiment = options.map { it.overAllSentiment }.averageOrZero()
+        val oiQty = options.sumOf { it.oiQty }
+        val oiChange = options.map { it.oiChange }.averageOrZero()
+        val lastMinOIChange = options.map { it.lastMinOIChange }.averageOrZero()
+        val overAllOIChange = options.map { it.overAllOIChange }.averageOrZero()
 
         val stockTime = stocks.maxByOrNull { it.timestamp }?.timestamp.orEmpty()
         val optionsTime = options.maxByOrNull { it.timestamp }?.timestamp.orEmpty()
 
+        val marketValue = markets.maxByOrNull { it.timestamp }
+
         val stockSummaryEntity = StockSummaryEntity(
             lastUpdated = stockTime,
+            ltp = marketValue?.ltp ?: 0.0,
             buyAvg = stockBuyAvg,
             sellAvg = stockSellAvg,
+            lastMinSentiment = stockLastMinSentiment,
             stockBuyStr = stockBuyStr,
-            stockSellStr = stockSellStr
+            stockSellStr = stockSellStr,
+            overAllSentiment = stocksOverAllSentiment
         )
 
         val optionsSummaryEntity = OptionsSummaryEntity(
             lastUpdated = optionsTime,
+            ltp = marketValue?.ltp ?: 0.0,
             volumeTraded = optionsVolume,
             buyAvg = optionsBuyAvg,
             sellAvg = optionsSellAvg,
+            lastMinSentiment = optionsLastMinSentiment,
             optionsBuyStr = optionsBuyStr,
-            optionsSellStr = optionsSellStr
+            optionsSellStr = optionsSellStr,
+            overAllSentiment = optionsOverAllSentiment,
+            oiQty = oiQty.toLong(),
+            oiChange = oiChange,
+            lastMinOIChange = lastMinOIChange,
+            overAllOIChange = overAllOIChange
         )
 
         // Persist to database

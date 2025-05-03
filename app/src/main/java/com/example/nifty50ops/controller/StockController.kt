@@ -44,6 +44,23 @@ class StockController(private val stockRepository: StockRepository) {
 
             val previous = previousStockMap[name]
 
+            // Store the first value if not already stored
+            val first = firstStockMap.getOrPut(name) {
+                StockEntity(
+                    timestamp = timestamp,
+                    name = name,
+                    ltp = ltp,
+                    buyQty = buyQty,
+                    sellQty = sellQty,
+                    buyDiffPercent = 0.0,
+                    sellDiffPercent = 0.0,
+                    lastMinSentiment = 0.0,
+                    buyStrengthPercent = 0.0,
+                    sellStrengthPercent = 0.0,
+                    overAllSentiment = 0.0
+                )
+            }
+
             val buyDiffPercent = previous?.let {
                 if (it.buyQty != 0) ((buyQty - it.buyQty).toDouble() / it.buyQty) * 100 else 0.0
             } ?: 0.0
@@ -52,20 +69,10 @@ class StockController(private val stockRepository: StockRepository) {
                 if (it.sellQty != 0) ((sellQty - it.sellQty).toDouble() / it.sellQty) * 100 else 0.0
             } ?: 0.0
 
-            // Store the first value if not already stored
-            val first = firstStockMap.getOrPut(name) {
-                StockEntity(
-                    name = name,
-                    ltp = ltp,
-                    buyQty = buyQty,
-                    sellQty = sellQty,
-                    buyDiffPercent = 0.0,
-                    sellDiffPercent = 0.0,
-                    buyStrengthPercent = 0.0,
-                    sellStrengthPercent = 0.0,
-                    timestamp = timestamp
-                )
-            }
+//            val lastMinMomentum2 = (previous?.buyDiffPercent ?: 0.0) - (previous?.sellDiffPercent ?: 0.0)
+//            val lastMinMomentum = buyDiffPercent - sellDiffPercent
+
+            val lastMinSentiment = buyDiffPercent - sellDiffPercent
 
             val buyStrengthPercent = if (first.buyQty != 0) {
                 ((buyQty - first.buyQty).toDouble() / first.buyQty) * 100
@@ -75,16 +82,20 @@ class StockController(private val stockRepository: StockRepository) {
                 ((sellQty - first.sellQty).toDouble() / first.sellQty) * 100
             } else 0.0
 
+            val overAllSentiment = buyStrengthPercent - sellStrengthPercent
+
             val currentStock = StockEntity(
+                timestamp = timestamp,
                 name = name,
                 ltp = ltp,
                 buyQty = buyQty,
                 sellQty = sellQty,
                 buyDiffPercent = buyDiffPercent,
                 sellDiffPercent = sellDiffPercent,
+                lastMinSentiment = lastMinSentiment,
                 buyStrengthPercent = buyStrengthPercent,
                 sellStrengthPercent = sellStrengthPercent,
-                timestamp = timestamp
+                overAllSentiment = overAllSentiment
             )
 
             previousStockMap[name] = currentStock

@@ -29,16 +29,27 @@ fun MainScreen(context: Context, navController: NavController) {
     val viewModel = remember { MainViewModel(context) }
     val uiState by viewModel.uiState.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        MainHeader(uiState.currentTime, uiState.niftyPrice)
-        Spacer(modifier = Modifier.height(12.dp))
-        StockSummary(context, navController)
-        Spacer(modifier = Modifier.height(12.dp))
-        OptionsSummary(context, navController)
-        Spacer(modifier = Modifier.height(20.dp))
-        SnapshotSection("📦 Stocks Snapshot") { StockSnapshot(context) }
-        Spacer(modifier = Modifier.height(16.dp))
-        SnapshotSection("🧾 Options Snapshot") { OptionsSnapshot(context) }
+    val scrollState = rememberScrollState()
+
+    Box(modifier = Modifier.fillMaxSize().verticalScroll(scrollState)) {
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)) {
+
+            MainHeader(uiState.currentTime, uiState.niftyPrice)
+            Spacer(modifier = Modifier.height(12.dp))
+            SentimentSummary(context, navController)
+            Spacer(modifier = Modifier.height(12.dp))
+            StockSummary(context, navController)
+            Spacer(modifier = Modifier.height(12.dp))
+            OptionsSummary(context, navController)
+            Spacer(modifier = Modifier.height(12.dp))
+            OISummary(context, navController)
+            Spacer(modifier = Modifier.height(20.dp))
+            SnapshotSection("📦 Stocks Snapshot") { StockSnapshot(context) }
+            Spacer(modifier = Modifier.height(16.dp))
+            SnapshotSection("🧾 Options Snapshot") { OptionsSnapshot(context) }
+        }
     }
 
 }

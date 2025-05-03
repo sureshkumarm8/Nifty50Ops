@@ -26,6 +26,8 @@ class MarketController(private val marketRepository: MarketRepository) {
         val jsonObject = JSONObject(response)
         val dataArray: JSONArray = jsonObject.optJSONArray("data") ?: JSONArray()
 
+        var previousLtp: Double? = null
+
         for (i in 0 until dataArray.length()) {
             val marketData = dataArray.getJSONObject(i)
             val securityId = marketData.optInt("security_id", -1)
@@ -36,17 +38,26 @@ class MarketController(private val marketRepository: MarketRepository) {
             val lastTradeTime = marketData.optLong("last_update_time", 0)
             val timestamp = formatToHourMinute(lastTradeTime)
 
+            val pointsChanged = if (previousLtp != null) {
+                ltp - previousLtp!!
+            } else {
+                0.0 // First value, so no change
+            }
+
             val marketsEntity = MarketsEntity(
+                timestamp = timestamp,
                 name = name,
                 ltp = ltp,
-                timestamp = timestamp
+                pointsChanged = pointsChanged.toInt()
             )
 
             marketsList.add(marketsEntity)
+            previousLtp = ltp
         }
 
         return marketsList
     }
+
 
     private suspend fun saveToDatabase(marketsEntities: List<MarketsEntity>) {
         withContext(Dispatchers.IO) {
