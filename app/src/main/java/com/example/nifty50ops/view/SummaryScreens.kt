@@ -49,6 +49,7 @@ import com.example.nifty50ops.model.StockSummaryEntity
 import com.example.nifty50ops.repository.MarketRepository
 import com.example.nifty50ops.repository.OptionsRepository
 import com.example.nifty50ops.repository.StockRepository
+import com.example.nifty50ops.utils.convertToLacsString
 import com.example.nifty50ops.utils.twoDecimalDisplay
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -95,7 +96,6 @@ fun SentimentSummary(context: Context, navController: NavController) {
         )
     }
 }
-
 
 @Composable
 fun StockSummary(context: Context, navController: NavController) {
@@ -179,10 +179,10 @@ fun OISummary(context: Context, navController: NavController) {
             title = "📉 OI Summary",
             summaryItems = listOf(
                 "Time" to summary.lastUpdated,
-                "OI" to "%.2f".format(summary.buyAvg),
-                "OI Change" to "%.2f".format(summary.sellAvg),
-                "LastMin" to "%.2f".format(summary.lastMinSentiment),
-                "OverAll" to "%.2f".format(summary.lastMinSentiment)
+                "OI" to convertToLacsString(summary.oiQty.toInt()),
+                "OI Change" to convertToLacsString(summary.oiChange.toInt()),
+                "LastMin" to "%.2f".format(summary.lastMinOIChange),
+                "OverAll" to "%.2f".format(summary.overAllOIChange)
             ),
             onClick = {
                 navController.navigate("oi_summary_history")
@@ -323,7 +323,6 @@ fun SentimentSummaryHistoryScreen(context: Context) {
         }
     }
 }
-
 
 @Composable
 fun StockSummaryHistoryScreen(context: Context) {
@@ -536,8 +535,8 @@ fun OISummaryHistoryScreen(context: Context) {
                 ) {
                     TableCell(item.lastUpdated.take(5))
                     TableCell(twoDecimalDisplay(item.ltp).take(5))
-                    TableCell(twoDecimalDisplay(item.oiQty.toDouble()))
-                    TableCell(twoDecimalDisplay(item.oiChange))
+                    TableCell(convertToLacsString(item.oiQty.toInt()))
+                    TableCell(convertToLacsString(item.oiChange.toInt()))
                     TableCell(twoDecimalDisplay(item.lastMinOIChange))
                     TableCell(twoDecimalDisplay(item.overAllOIChange))
                 }
