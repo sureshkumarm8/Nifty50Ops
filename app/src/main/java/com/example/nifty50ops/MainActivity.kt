@@ -60,6 +60,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.nifty50ops.service.DataFetchService
+import com.example.nifty50ops.ui.screens.ExportDataScreen
 import com.example.nifty50ops.ui.theme.Nifty50OpsTheme
 import com.example.nifty50ops.utils.readJwtToken
 import com.example.nifty50ops.utils.readSecurityIdToSymbolMap
@@ -112,6 +113,7 @@ class MainActivity : ComponentActivity() {
             DrawerItem("main", "🏠 Home"),
             DrawerItem("stocks", "📈 Stocks"),
             DrawerItem("options", "📊 Options"),
+            DrawerItem("csv_export", "💾 Export CSV"),
             DrawerItem("settings", "⚙️ Settings"),
             DrawerItem("about", "ℹ️ About")
         )
@@ -213,6 +215,7 @@ class MainActivity : ComponentActivity() {
             currentRoute == "main" -> "🏠 Nifty 50 Ops"
             currentRoute == "stocks" -> "📈 Nifty 50 Stock Updates"
             currentRoute == "options" -> "📊 Weekly Nifty 50 Options"
+            currentRoute == "csv_export" -> "💾 Export CSV"
             currentRoute == "settings" -> "⚙️ Settings"
             currentRoute == "about" -> "ℹ️ About"
             currentRoute == "sentiment_summary_history" -> "📈 Sentiment Summary History"
@@ -278,6 +281,7 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("stocks") { StockScreen(context, navController) }
                         composable("options") { OptionsScreen(context, navController) }
+                        composable("csv_export") { ExportDataScreen(context) }
                         composable("settings") { SettingsScreen(context) }
                         composable("about") { AboutScreen(context) }
                         composable("sentiment_summary_history") { SentimentSummaryHistoryScreen(context) }

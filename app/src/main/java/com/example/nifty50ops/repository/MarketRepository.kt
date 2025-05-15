@@ -18,6 +18,4 @@ class MarketRepository(private val marketDao: MarketDao) {
 
     fun getAllStockSummary(): Flow<List<StockSummaryEntity>> = marketDao.getAllStockSummary()
     fun getAllOptionsSummary(): Flow<List<OptionsSummaryEntity>> = marketDao.getAllOptionsSummary()
-
-
 }

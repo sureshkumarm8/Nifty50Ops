@@ -76,6 +76,10 @@ fun convertToLacsString(value: Int): String {
     return if (value >= 1000) "${"%.2f".format(value / 100000.0)}L" else value.toString()
 }
 
+fun convertToCrString(value: Int): String {
+    return if (value >= 1000) "${"%.2f".format(value / 10000000.0)}Cr" else value.toString()
+}
+
 fun twoDecimalDisplay(value: Double): String {
     return("%.2f".format(value))
 }

@@ -5,6 +5,7 @@ import com.example.nifty50ops.model.MarketsEntity
 import com.example.nifty50ops.network.ApiService
 import com.example.nifty50ops.repository.MarketRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -14,6 +15,7 @@ import java.util.Locale
 
 class MarketController(private val marketRepository: MarketRepository) {
 
+
     suspend fun fetchMarketData(context: Context) {
         val prefs = "NSE:13:INDEX"
         ApiService.fetchData(context, prefs)?.let { responseBody ->
@@ -21,12 +23,17 @@ class MarketController(private val marketRepository: MarketRepository) {
         }
     }
 
-    private fun parseMarketResponse(response: String): List<MarketsEntity> {
+    var previousLtp: Double? = null
+
+    private suspend fun parseMarketResponse(response: String): List<MarketsEntity> {
         val marketsList = mutableListOf<MarketsEntity>()
         val jsonObject = JSONObject(response)
         val dataArray: JSONArray = jsonObject.optJSONArray("data") ?: JSONArray()
 
-        var previousLtp: Double? = null
+        // Fetch latest LTP from DB once before the loop
+        if (previousLtp == null) {
+            previousLtp = marketRepository.getLatestData().firstOrNull()?.ltp
+        }
 
         for (i in 0 until dataArray.length()) {
             val marketData = dataArray.getJSONObject(i)
@@ -37,6 +44,7 @@ class MarketController(private val marketRepository: MarketRepository) {
             val ltp = marketData.optDouble("last_price", 0.0)
             val lastTradeTime = marketData.optLong("last_update_time", 0)
             val timestamp = formatToHourMinute(lastTradeTime)
+
 
             val pointsChanged = if (previousLtp != null) {
                 ltp - previousLtp!!

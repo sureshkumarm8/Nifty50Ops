@@ -6,6 +6,7 @@ import com.example.nifty50ops.network.ApiService
 import com.example.nifty50ops.repository.OptionsRepository
 import com.example.nifty50ops.utils.readSecurityIdToSymbolMap
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -29,10 +30,26 @@ class OptionsController(private val optionRepository: OptionsRepository) {
     private val previousOptionMap = mutableMapOf<String, OptionsEntity>()
     private val firstOptionMap = mutableMapOf<String, OptionsEntity>()
 
-    private fun parseOptionResponse(response: String): List<OptionsEntity> {
+    private suspend fun parseOptionResponse(response: String): List<OptionsEntity> {
         val optionsList = mutableListOf<OptionsEntity>()
         val jsonObject = JSONObject(response)
         val dataArray: JSONArray = jsonObject.optJSONArray("data") ?: JSONArray()
+
+        // Fetch latest stored stocks from DB (once)
+        val latestStoredStocks = optionRepository.getLastMinOptions().firstOrNull() ?: emptyList()
+
+        // Initialize previousStockMap from DB if not already populated
+        for (stock in latestStoredStocks) {
+            if (!previousOptionMap.containsKey(stock.name)) {
+                previousOptionMap[stock.name] = stock
+            }
+        }
+        if (firstOptionMap.isEmpty()) {
+            val firstMinuteStocks = optionRepository.getFirstMinuteOptions()
+            for (stock in firstMinuteStocks) {
+                firstOptionMap[stock.name] = stock
+            }
+        }
 
         for (i in 0 until dataArray.length()) {
             val optionsObject = dataArray.getJSONObject(i)
@@ -67,7 +84,9 @@ class OptionsController(private val optionRepository: OptionsRepository) {
                     sellStrengthPercent = 0.0,
                     overAllSentiment = 0.0,
                     oiQty = oiQty,
-                    oiChange = oiChange
+                    oiChange = oiChange,
+                    lastMinOIChange = 0.0,
+                    overAllOIChange = 0.0
                 )
             }
 
@@ -91,6 +110,15 @@ class OptionsController(private val optionRepository: OptionsRepository) {
 
             val overAllSentiment = buyStrengthPercent - sellStrengthPercent
 
+            val lastMinOIChange = previous?.let {
+                if (it.oiQty != 0) ((oiQty - it.oiQty).toDouble() / it.oiQty) * 100 else 0.0
+            } ?: 0.0
+
+            val overAllOIChange = if (first.oiQty != 0) {
+                ((oiQty - first.oiQty).toDouble() / first.oiQty) * 100
+            } else 0.0
+
+
             val currentOption = OptionsEntity(
                 timestamp = timestamp,
                 name = name,
@@ -105,8 +133,9 @@ class OptionsController(private val optionRepository: OptionsRepository) {
                 sellStrengthPercent = sellStrengthPercent,
                 overAllSentiment = overAllSentiment,
                 oiQty = oiQty,
-                oiChange = oiChange
-
+                oiChange = oiChange,
+                lastMinOIChange = lastMinOIChange,
+                overAllOIChange = overAllOIChange
             )
 
             previousOptionMap[name] = currentOption

@@ -49,12 +49,14 @@ import com.example.nifty50ops.model.StockSummaryEntity
 import com.example.nifty50ops.repository.MarketRepository
 import com.example.nifty50ops.repository.OptionsRepository
 import com.example.nifty50ops.repository.StockRepository
+import com.example.nifty50ops.utils.convertToCrString
 import com.example.nifty50ops.utils.convertToLacsString
 import com.example.nifty50ops.utils.twoDecimalDisplay
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 @Composable
@@ -179,7 +181,7 @@ fun OISummary(context: Context, navController: NavController) {
             title = "📉 OI Summary",
             summaryItems = listOf(
                 "Time" to summary.lastUpdated,
-                "OI" to convertToLacsString(summary.oiQty.toInt()),
+                "OI" to convertToCrString(summary.oiQty.toInt()),
                 "OI Change" to convertToLacsString(summary.oiChange.toInt()),
                 "LastMin" to "%.2f".format(summary.lastMinOIChange),
                 "OverAll" to "%.2f".format(summary.overAllOIChange)
@@ -246,24 +248,39 @@ fun SentimentSummaryHistoryScreen(context: Context) {
     var optionList by remember { mutableStateOf<List<OptionsSummaryEntity>>(emptyList()) }
     var marketList by remember { mutableStateOf<List<MarketsEntity>>(emptyList()) }
 
-
     val listState = rememberLazyListState()
+    val horizontalScrollState = rememberScrollState()
 
+    // Collect data
     LaunchedEffect(true) {
         launch {
-            repository.getAllStockSummary().collectLatest { stockList = it }
+            repository.getAllStockSummary().collectLatest { newList ->
+                stockList = newList
+            }
         }
         launch {
-            repository.getAllOptionsSummary().collectLatest { optionList = it }
+            repository.getAllOptionsSummary().collectLatest { newList ->
+                optionList = newList
+            }
         }
         launch {
-            repository.getAllData().collectLatest { marketList = it }
+            repository.getAllData().collectLatest { newList ->
+                marketList = newList.reversed()
+            }
         }
     }
 
-    val horizontalScrollState = rememberScrollState()
+    // Scroll to bottom after LazyColumn is fully composed and new item is added
+    LaunchedEffect(marketList.size) {
+        snapshotFlow { listState.layoutInfo.totalItemsCount }
+            .filter { it > 0 }
+            .firstOrNull()
+        if (marketList.isNotEmpty()) {
+            listState.animateScrollToItem(marketList.lastIndex)
+        }
+    }
 
-    // Zip the three lists safely
+    // Combine all 3 lists
     val combinedList = remember(stockList, optionList, marketList) {
         stockList
             .zip(optionList) { stock, option -> stock to option }
@@ -277,8 +294,8 @@ fun SentimentSummaryHistoryScreen(context: Context) {
     ) {
         Column(
             modifier = Modifier
-                .width(600.dp) // Adjust width for more columns
-                .padding(horizontal = 8.dp)
+                .width(620.dp)
+                .padding(horizontal = 2.dp)
         ) {
             Row(
                 modifier = Modifier
@@ -323,6 +340,7 @@ fun SentimentSummaryHistoryScreen(context: Context) {
         }
     }
 }
+
 
 @Composable
 fun StockSummaryHistoryScreen(context: Context) {
@@ -535,7 +553,7 @@ fun OISummaryHistoryScreen(context: Context) {
                 ) {
                     TableCell(item.lastUpdated.take(5))
                     TableCell(twoDecimalDisplay(item.ltp).take(5))
-                    TableCell(convertToLacsString(item.oiQty.toInt()))
+                    TableCell(convertToCrString(item.oiQty.toInt()))
                     TableCell(convertToLacsString(item.oiChange.toInt()))
                     TableCell(twoDecimalDisplay(item.lastMinOIChange))
                     TableCell(twoDecimalDisplay(item.overAllOIChange))

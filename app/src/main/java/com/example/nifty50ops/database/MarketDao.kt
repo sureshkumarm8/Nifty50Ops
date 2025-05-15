@@ -36,6 +36,12 @@ interface MarketDao {
     @Query("SELECT * FROM stock_table WHERE timestamp = (SELECT MAX(timestamp) FROM stock_table) ORDER BY id ASC")
     fun getLatestStocks(): Flow<List<StockEntity>>
 
+    @Query("SELECT * FROM stock_table WHERE (name, timestamp) IN (SELECT name, MIN(timestamp) FROM stock_table GROUP BY name)")
+    fun getFirstMinStocks(): List<StockEntity>
+
+    @Query("SELECT * FROM stock_table WHERE timestamp = (SELECT MAX(timestamp) FROM stock_table)")
+    fun getLastMinStocks(): Flow<List<StockEntity>>
+
     @Query("SELECT * FROM stock_table WHERE name = :name ORDER BY timestamp ASC")
     fun getStockHistory(name: String): Flow<List<StockEntity>>
 
@@ -49,7 +55,8 @@ interface MarketDao {
     fun getAllStockSummary(): Flow<List<StockSummaryEntity>>
 
 
-   //OptionsScreen
+
+    //OptionsScreen
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertOption(option: OptionsEntity)
 
@@ -62,6 +69,12 @@ interface MarketDao {
     @Query("SELECT * FROM options_table WHERE timestamp = (SELECT MAX(timestamp) FROM options_table) ORDER BY volTraded DESC")
     fun getLatestOptions(): Flow<List<OptionsEntity>>
 
+    @Query("SELECT * FROM options_table WHERE (name, timestamp) IN (SELECT name, MIN(timestamp) FROM options_table GROUP BY name)")
+    fun getFirstMinOptions(): List<OptionsEntity>
+
+    @Query("SELECT * FROM options_table WHERE timestamp = (SELECT MAX(timestamp) FROM options_table)")
+    fun getLastMinOptions(): Flow<List<OptionsEntity>>
+
     @Query("SELECT * FROM options_table WHERE timestamp >= :startTime ORDER BY timestamp DESC")
     fun getOptionsFromLastMinute(startTime: String): Flow<List<OptionsEntity>>
 
@@ -73,8 +86,5 @@ interface MarketDao {
 
     @Query("SELECT * FROM optionsSummary_table ORDER BY lastUpdated")
     fun getAllOptionsSummary(): Flow<List<OptionsSummaryEntity>>
-
-
-
 
 }

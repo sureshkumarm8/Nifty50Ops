@@ -97,4 +97,8 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    // csv util
+    implementation(libs.opencsv)
+
 }

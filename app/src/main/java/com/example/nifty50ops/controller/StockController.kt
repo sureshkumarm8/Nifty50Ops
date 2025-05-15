@@ -5,6 +5,7 @@ import com.example.nifty50ops.model.StockEntity
 import com.example.nifty50ops.network.ApiService
 import com.example.nifty50ops.repository.StockRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -25,10 +26,27 @@ class StockController(private val stockRepository: StockRepository) {
     private val previousStockMap = mutableMapOf<String, StockEntity>()
     private val firstStockMap = mutableMapOf<String, StockEntity>()
 
-    private fun parseStockResponse(response: String): List<StockEntity> {
+    private suspend fun parseStockResponse(response: String): List<StockEntity> {
         val stockList = mutableListOf<StockEntity>()
         val jsonObject = JSONObject(response)
         val dataArray: JSONArray = jsonObject.optJSONArray("data") ?: JSONArray()
+
+        // Fetch latest stored stocks from DB (once)
+        val latestStoredStocks = stockRepository.getLastMinStocks().firstOrNull() ?: emptyList()
+
+        // Initialize previousStockMap from DB if not already populated
+        for (stock in latestStoredStocks) {
+            if (!previousStockMap.containsKey(stock.name)) {
+                previousStockMap[stock.name] = stock
+            }
+        }
+
+        if (firstStockMap.isEmpty()) {
+            val firstMinuteStocks = stockRepository.getFirstMinuteStocks()
+            for (stock in firstMinuteStocks) {
+                firstStockMap[stock.name] = stock
+            }
+        }
 
         for (i in 0 until dataArray.length()) {
             val stockObject = dataArray.getJSONObject(i)
