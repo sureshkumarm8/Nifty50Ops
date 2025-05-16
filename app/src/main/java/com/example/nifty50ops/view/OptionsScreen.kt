@@ -13,12 +13,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.nifty50ops.controller.OptionsController
 import com.example.nifty50ops.database.MarketDatabase
 import com.example.nifty50ops.model.OptionsEntity
 import com.example.nifty50ops.repository.OptionsRepository
+import com.example.nifty50ops.utils.convertToCrString
 import com.example.nifty50ops.utils.convertToLacsString
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -51,11 +53,11 @@ fun OptionsScreen(context: Context, navController: NavController) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 6.dp)
-                .background(MaterialTheme.colorScheme.primaryContainer),
+                .background(Color(0xFF2196F3)),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TableHeaderCell("Name", weight = 2f)
-            TableHeaderCell("Volume")
+            TableHeaderCell("Name", weight = 1.5f, textAlign = TextAlign.Start)
+            TableHeaderCell("Volume", weight = 1.5f, textAlign = TextAlign.Center)
             TableHeaderCell("Buy Qty")
             TableHeaderCell("Sell Qty")
             TableHeaderCell("Buy %")
@@ -96,10 +98,10 @@ fun OptionsTable(optionList: List<OptionsEntity>, onRowClick: (String) -> Unit) 
                     .padding(vertical = 2.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TableCell(option.name, color = Color.Blue, weight = 2f)
-                TableCell("%.2f".format(option.volTraded.toDouble() / 100000))
-                TableCell("%.2f".format(option.buyQty.toDouble() / 100000))
-                TableCell("%.2f".format(option.sellQty.toDouble() / 100000))
+                TableCell(option.name, color = Color(0xFF2196F3), weight = 1.5f, textAlign = TextAlign.Start)
+                TableCell(convertToLacsString(option.volTraded), weight = 1.5f, textAlign = TextAlign.End)
+                TableCell(convertToLacsString(option.buyQty), weight = 1.2f)
+                TableCell(convertToLacsString(option.sellQty), weight = 1.2f)
                 TableCell("%.1f".format(option.buyDiffPercent), color = buyColor)
                 TableCell("%.1f".format(option.sellDiffPercent), color = sellColor)
                 TableCell("%.1f".format(option.buyStrengthPercent), color = buyColor)
@@ -141,7 +143,7 @@ fun OptionHistoryScreen(context: Context, optionName: String) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.primaryContainer)
+                .background(Color(0xFF2196F3))
                 .padding(vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {

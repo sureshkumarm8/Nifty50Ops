@@ -35,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -44,6 +45,7 @@ import com.example.nifty50ops.database.MarketDatabase
 import com.example.nifty50ops.model.MarketsEntity
 import com.example.nifty50ops.model.OptionsEntity
 import com.example.nifty50ops.model.OptionsSummaryEntity
+import com.example.nifty50ops.model.SentimentSummaryEntity
 import com.example.nifty50ops.model.StockEntity
 import com.example.nifty50ops.model.StockSummaryEntity
 import com.example.nifty50ops.repository.MarketRepository
@@ -240,7 +242,7 @@ fun SummaryCard(title: String, summaryItems: List<Pair<String, String>>, onClick
 }
 
 @Composable
-fun SentimentSummaryHistoryScreen(context: Context) {
+fun SentimentSummaryHistoryScreen_3Tables(context: Context) {
     val stockDao = MarketDatabase.getDatabase(context).marketDao()
     val repository = MarketRepository(stockDao)
 
@@ -341,6 +343,85 @@ fun SentimentSummaryHistoryScreen(context: Context) {
     }
 }
 
+@Composable
+fun SentimentSummaryHistoryScreen(context: Context) {
+    val dao = MarketDatabase.getDatabase(context).marketDao()
+    val repository = MarketRepository(dao)
+
+    var sentimentList by remember { mutableStateOf<List<SentimentSummaryEntity>>(emptyList()) }
+    val listState = rememberLazyListState()
+    val horizontalScrollState = rememberScrollState()
+
+    // Collect sentiment summary data
+    LaunchedEffect(true) {
+        repository.getAllSentimentSummary().collectLatest { newList ->
+            sentimentList = newList.sortedBy { it.lastUpdated }
+        }
+    }
+
+    // Scroll to bottom when new item is added
+    LaunchedEffect(sentimentList.size) {
+        snapshotFlow { listState.layoutInfo.totalItemsCount }
+            .filter { it > 0 }
+            .firstOrNull()
+        if (sentimentList.isNotEmpty()) {
+            listState.animateScrollToItem(sentimentList.lastIndex)
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .horizontalScroll(horizontalScrollState)
+    ) {
+        Column(
+            modifier = Modifier
+                .width(580.dp)
+                .padding(horizontal = 1.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 3.dp)
+                    .background(Color(0xFF2196F3)),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TableHeaderCell("Time", weight = 1f, textAlign = TextAlign.Start)
+                TableHeaderCell("LTP", weight = 1f, textAlign = TextAlign.Center)
+                TableHeaderCell("Points Diff", weight = 1f)
+                TableHeaderCell("Stock 1Min", weight = 1f)
+                TableHeaderCell("Stock OverAll", weight = 1f)
+                TableHeaderCell("Options 1Min", weight = 1f)
+                TableHeaderCell("Options OverAll", weight = 1f)
+                TableHeaderCell("OI 1Min", weight = 1f)
+                TableHeaderCell("OI Change", weight = 1f)
+            }
+
+            Divider(color = Color.Gray, thickness = 1.dp)
+
+            LazyColumn(state = listState) {
+                items(sentimentList) { item ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(3.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TableCell(item.lastUpdated.take(5), weight = 1f, textAlign = TextAlign.Start)
+                        TableCell(twoDecimalDisplay(item.ltp).take(5), weight = 1f, textAlign = TextAlign.Center)
+                        TableCell(item.pointsChanged.toString(), weight = 1f)
+                        TableCell(twoDecimalDisplay(item.stock1MinChange), weight = 1f)
+                        TableCell(twoDecimalDisplay(item.stockOverAllChange), weight = 1f)
+                        TableCell(twoDecimalDisplay(item.option1MinChange), weight = 1f)
+                        TableCell(twoDecimalDisplay(item.optionOverAllChange), weight = 1f)
+                        TableCell(twoDecimalDisplay(item.oi1MinChange), weight = 1f)
+                        TableCell(twoDecimalDisplay(item.oiOverAllChange), weight = 1f)
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun StockSummaryHistoryScreen(context: Context) {
@@ -368,18 +449,18 @@ fun StockSummaryHistoryScreen(context: Context) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 10.dp)
-                .background(MaterialTheme.colorScheme.primaryContainer),
+                .padding(vertical = 6.dp)
+                .background(Color(0xFF2196F3)),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TableHeaderCell("Time")
-            TableHeaderCell("LTP")
-            TableHeaderCell("Buy %")
-            TableHeaderCell("Sell %")
-            TableHeaderCell("1Min")
-            TableHeaderCell("BuyStr %")
-            TableHeaderCell("SellStr %")
-            TableHeaderCell("Over All")
+            TableHeaderCell("Time", textAlign = TextAlign.Center)
+            TableHeaderCell("LTP", textAlign = TextAlign.Center)
+            TableHeaderCell("Buy Diff%")
+            TableHeaderCell("Sell Diff%")
+            TableHeaderCell("1Min Diff%")
+            TableHeaderCell("Buy Str%")
+            TableHeaderCell("Sell Str%")
+            TableHeaderCell("Over All%")
         }
 
         Divider(color = Color.Gray, thickness = 1.dp)
@@ -403,8 +484,8 @@ fun StockSummaryHistoryScreen(context: Context) {
                         .padding(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TableCell(item.lastUpdated.take(5))
-                    TableCell(twoDecimalDisplay(item.ltp).take(5))
+                    TableCell(item.lastUpdated.take(5), textAlign = TextAlign.Start)
+                    TableCell(twoDecimalDisplay(item.ltp).take(5), textAlign = TextAlign.Start)
                     TableCell(twoDecimalDisplay(item.buyAvg), color = buyColor)
                     TableCell(twoDecimalDisplay(item.sellAvg), color = sellColor)
                     TableCell(twoDecimalDisplay(item.lastMinSentiment))
@@ -444,17 +525,17 @@ fun OptionsSummaryHistoryScreen(context: Context) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 6.dp)
-                .background(MaterialTheme.colorScheme.primaryContainer),
+                .background(Color(0xFF2196F3)),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TableHeaderCell("Time")
-            TableHeaderCell("LTP")
-            TableHeaderCell("Buy %")
-            TableHeaderCell("Sell %")
-            TableHeaderCell("1Min")
-            TableHeaderCell("BuyStr %")
-            TableHeaderCell("SellStr %")
-            TableHeaderCell("Over All")
+            TableHeaderCell("Time", textAlign = TextAlign.Center)
+            TableHeaderCell("LTP", textAlign = TextAlign.Center)
+            TableHeaderCell("Buy Diff%")
+            TableHeaderCell("Sell Diff%")
+            TableHeaderCell("1Min Diff%")
+            TableHeaderCell("Buy Str%")
+            TableHeaderCell("Sell Str%")
+            TableHeaderCell("Over All%")
         }
 
         Divider(color = Color.Gray, thickness = 1.dp)
@@ -478,7 +559,7 @@ fun OptionsSummaryHistoryScreen(context: Context) {
                         .padding(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TableCell(item.lastUpdated.take(5))
+                    TableCell(item.lastUpdated.take(5), textAlign = TextAlign.Start)
                     TableCell(twoDecimalDisplay(item.ltp).take(5))
                     TableCell(twoDecimalDisplay(item.buyAvg), color = buyColor)
                     TableCell(twoDecimalDisplay(item.sellAvg), color = sellColor)
@@ -519,7 +600,7 @@ fun OISummaryHistoryScreen(context: Context) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 6.dp)
-                .background(MaterialTheme.colorScheme.primaryContainer),
+                .background(Color(0xFF2196F3)),
             verticalAlignment = Alignment.CenterVertically
         ) {
             TableHeaderCell("Time")

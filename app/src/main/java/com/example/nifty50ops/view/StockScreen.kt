@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,10 +55,10 @@ fun StockScreen(context: Context, navController: NavController) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 10.dp)
-                .background(MaterialTheme.colorScheme.primaryContainer),
+                .background(Color(0xFF2196F3)),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TableHeaderCell("Name", weight = 2f)
+            TableHeaderCell("Name", weight = 2f, textAlign = TextAlign.Start)
             TableHeaderCell("LTP")
             TableHeaderCell("Buy Qty")
             TableHeaderCell("Sell Qty")
@@ -99,7 +100,7 @@ fun StockTable(stockList: List<StockEntity>, onRowClick: (String) -> Unit) {
 
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                TableCell(stock.name, color = Color.Blue, weight = 2f)
+                TableCell(stock.name, color = Color(0xFF2196F3), weight = 2f, textAlign = TextAlign.Start)
                 TableCell("%.0f".format(stock.ltp), fontSize = 12.sp)
                 TableCell("%.2f".format(stock.buyQty.toDouble() / 100000))
                 TableCell("%.2f".format(stock.sellQty.toDouble() / 100000))
@@ -116,7 +117,7 @@ fun StockTable(stockList: List<StockEntity>, onRowClick: (String) -> Unit) {
 }
 
 @Composable
-fun RowScope.TableHeaderCell(text: String, weight: Float = 1f) {
+fun RowScope.TableHeaderCell(text: String, weight: Float = 1f, textAlign: TextAlign = TextAlign.End) {
     Text(
         text = text,
         modifier = Modifier
@@ -124,12 +125,19 @@ fun RowScope.TableHeaderCell(text: String, weight: Float = 1f) {
             .padding(6.dp),
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onPrimaryContainer,
-        style = MaterialTheme.typography.labelLarge
+        style = MaterialTheme.typography.labelLarge,
+        textAlign = textAlign
     )
 }
 
 @Composable
-fun RowScope.TableCell(text: String, color: Color = Color.Unspecified, weight: Float = 1f, fontSize: TextUnit = 12.sp) {
+fun RowScope.TableCell(
+    text: String,
+    color: Color = Color.Unspecified,
+    weight: Float = 1f,
+    fontSize: TextUnit = 12.sp,
+    textAlign: TextAlign = TextAlign.End
+) {
     Text(
         text = text,
         modifier = Modifier
@@ -138,8 +146,10 @@ fun RowScope.TableCell(text: String, color: Color = Color.Unspecified, weight: F
         color = color,
         fontSize = fontSize,
         style = MaterialTheme.typography.bodyMedium,
+        textAlign = textAlign
     )
 }
+
 
 @Composable
 fun StockHistoryScreen(context: Context, stockName: String) {
@@ -171,7 +181,7 @@ fun StockHistoryScreen(context: Context, stockName: String) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 10.dp)
-                .background(MaterialTheme.colorScheme.primaryContainer),
+                .background(Color(0xFF2196F3)),
             verticalAlignment = Alignment.CenterVertically
         ) {
             TableHeaderCell("Time")

@@ -39,3 +39,16 @@ data class OptionsSummaryEntity(
     val lastMinOIChange : Double,
     val overAllOIChange : Double
 )
+
+@Entity(tableName = "sentimentSummary_table")
+data class SentimentSummaryEntity(
+    @PrimaryKey val lastUpdated: String,
+    val ltp: Double,
+    val pointsChanged: Int,
+    val stock1MinChange : Double,
+    val stockOverAllChange : Double,
+    val option1MinChange : Double,
+    val optionOverAllChange : Double,
+    val oi1MinChange : Double,
+    val oiOverAllChange : Double
+)

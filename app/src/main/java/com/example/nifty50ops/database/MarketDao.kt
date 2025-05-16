@@ -7,6 +7,7 @@ import androidx.room.Query
 import com.example.nifty50ops.model.MarketsEntity
 import com.example.nifty50ops.model.OptionsEntity
 import com.example.nifty50ops.model.OptionsSummaryEntity
+import com.example.nifty50ops.model.SentimentSummaryEntity
 import com.example.nifty50ops.model.StockEntity
 import com.example.nifty50ops.model.StockSummaryEntity
 import kotlinx.coroutines.flow.Flow
@@ -86,5 +87,12 @@ interface MarketDao {
 
     @Query("SELECT * FROM optionsSummary_table ORDER BY lastUpdated")
     fun getAllOptionsSummary(): Flow<List<OptionsSummaryEntity>>
+
+    //SentimentSummaryScreen
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSentimentSummary(summary: SentimentSummaryEntity)
+
+    @Query("SELECT * FROM sentimentSummary_table ORDER BY lastUpdated DESC")
+    fun getAllSentimentSummary(): Flow<List<SentimentSummaryEntity>>
 
 }

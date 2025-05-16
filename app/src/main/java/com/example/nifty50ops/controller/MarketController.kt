@@ -1,10 +1,13 @@
 package com.example.nifty50ops.controller
 
 import android.content.Context
+import com.example.nifty50ops.database.MarketDatabase
 import com.example.nifty50ops.model.MarketsEntity
+import com.example.nifty50ops.model.SentimentSummaryEntity
 import com.example.nifty50ops.network.ApiService
 import com.example.nifty50ops.repository.MarketRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -66,7 +69,6 @@ class MarketController(private val marketRepository: MarketRepository) {
         return marketsList
     }
 
-
     private suspend fun saveToDatabase(marketsEntities: List<MarketsEntity>) {
         withContext(Dispatchers.IO) {
             for (marketsEntity in marketsEntities) {
@@ -84,4 +86,35 @@ class MarketController(private val marketRepository: MarketRepository) {
             "--:--"
         }
     }
+
+    suspend fun saveSentimentSummary(context: Context) {
+        try {
+            val dao = MarketDatabase.getDatabase(context)
+            val repository = MarketRepository(dao.marketDao())
+            val latestStock = repository.getLatestStockSummary().first()
+            val latestOption = repository.getLatestOptionsSummary().first()
+            val latestMarket = repository.getLatestData().first()
+
+            if (latestStock != null && latestOption != null && latestMarket != null) {
+                val summary = SentimentSummaryEntity(
+                    lastUpdated = latestStock.lastUpdated,
+                    ltp = latestMarket.ltp,
+                    pointsChanged = latestMarket.pointsChanged,
+                    stock1MinChange = latestStock.lastMinSentiment,
+                    stockOverAllChange = latestStock.overAllSentiment,
+                    option1MinChange = latestOption.lastMinSentiment,
+                    optionOverAllChange = latestOption.overAllSentiment,
+                    oi1MinChange = latestOption.lastMinOIChange,
+                    oiOverAllChange = latestOption.overAllOIChange
+                )
+
+                repository.insertSentimentSummary(summary)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+
+
 }
