@@ -84,11 +84,39 @@ fun twoDecimalDisplay(value: Double): String {
     return("%.2f".format(value))
 }
 
-fun setColorForHistory(stockAvg: Double): Color {
+fun setColorForBuy(value: Double): Color {
     val setColor = when {
-        stockAvg > 0 -> Color(0xFF2E7D32) // Green
-        stockAvg < 0 -> Color(0xFFC62828) // Red
+        value > 0 -> Color(0xFF2E7D32) // Increased Buys
+        value < 0 -> Color(0xFFC62828) // Decreased Buys
         else -> Color.Gray
     }
     return setColor
 }
+
+fun setColorForSell(value: Double): Color {
+    val setColor = when {
+        value < 0 -> Color(0xFF2E7D32) // Decreased Sells
+        value > 0 -> Color(0xFFC62828) // Increased Sells
+        else -> Color.Gray
+    }
+    return setColor
+}
+
+fun setColorForBuyStr(value: Double, prevValue: Double): Color {
+    val setColor = when {
+        value > prevValue -> Color(0xFF2E7D32) // Increased Buys
+        value < prevValue -> Color(0xFFC62828) // Decreased Buys
+        else -> Color.Gray
+    }
+    return setColor
+}
+
+fun setColorForSellStr(value: Double, prevValue: Double): Color {
+    val setColor = when {
+        value < prevValue -> Color(0xFF2E7D32) // Decreased Sells
+        value > prevValue -> Color(0xFFC62828) // Increased Sells
+        else -> Color.Gray
+    }
+    return setColor
+}
+

@@ -19,9 +19,14 @@ import androidx.navigation.NavController
 import com.example.nifty50ops.controller.OptionsController
 import com.example.nifty50ops.database.MarketDatabase
 import com.example.nifty50ops.model.OptionsEntity
+import com.example.nifty50ops.model.StockEntity
 import com.example.nifty50ops.repository.OptionsRepository
 import com.example.nifty50ops.utils.convertToCrString
 import com.example.nifty50ops.utils.convertToLacsString
+import com.example.nifty50ops.utils.setColorForBuy
+import com.example.nifty50ops.utils.setColorForBuyStr
+import com.example.nifty50ops.utils.setColorForSell
+import com.example.nifty50ops.utils.setColorForSellStr
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
@@ -75,37 +80,37 @@ fun OptionsScreen(context: Context, navController: NavController) {
     }
 }
 
+data class OptionsWithPrevious(
+    val current: OptionsEntity,
+    val prev: OptionsEntity?
+)
 @Composable
 fun OptionsTable(optionList: List<OptionsEntity>, onRowClick: (String) -> Unit) {
+    val enrichedList = remember(optionList) {
+        optionList.mapIndexed { index, curr ->
+            val prev = optionList.getOrNull(index - 1)
+            OptionsWithPrevious(curr, prev)
+        }
+    }
     LazyColumn {
-        items(optionList) { option ->
-            val buyColor = when {
-                option.buyDiffPercent > 0 -> Color(0xFF2E7D32)
-                option.buyDiffPercent < 0 -> Color(0xFFC62828)
-                else -> Color.Gray
-            }
-
-            val sellColor = when {
-                option.sellDiffPercent > 0 -> Color(0xFFC62828)
-                option.sellDiffPercent < 0 -> Color(0xFF2E7D32)
-                else -> Color.Gray
-            }
-
+        items(enrichedList) { item ->
+            val curr = item.current
+            val prev = item.prev
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onRowClick(option.name) } // ✅ handle click here
+                    .clickable { onRowClick(curr.name) } // ✅ handle click here
                     .padding(vertical = 2.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TableCell(option.name, color = Color(0xFF2196F3), weight = 1.5f, textAlign = TextAlign.Start)
-                TableCell(convertToLacsString(option.volTraded), weight = 1.5f, textAlign = TextAlign.End)
-                TableCell(convertToLacsString(option.buyQty), weight = 1.2f)
-                TableCell(convertToLacsString(option.sellQty), weight = 1.2f)
-                TableCell("%.1f".format(option.buyDiffPercent), color = buyColor)
-                TableCell("%.1f".format(option.sellDiffPercent), color = sellColor)
-                TableCell("%.1f".format(option.buyStrengthPercent), color = buyColor)
-                TableCell("%.1f".format(option.sellStrengthPercent), color = sellColor)
+                TableCell(curr.name, color = Color(0xFF2196F3), weight = 1.5f, textAlign = TextAlign.Start)
+                TableCell(convertToLacsString(curr.volTraded), weight = 1.5f, textAlign = TextAlign.End)
+                TableCell(convertToLacsString(curr.buyQty), weight = 1.2f, color = setColorForBuyStr(curr.buyQty.toDouble(), prev?.buyQty?.toDouble() ?: curr.buyQty.toDouble()))
+                TableCell(convertToLacsString(curr.sellQty), weight = 1.2f, color = setColorForSellStr(curr.sellQty.toDouble(), prev?.sellQty?.toDouble() ?: curr.sellQty.toDouble()))
+                TableCell("%.1f".format(curr.buyDiffPercent), color = setColorForBuyStr(curr.buyDiffPercent, prev?.buyDiffPercent ?: curr.buyDiffPercent))
+                TableCell("%.1f".format(curr.sellDiffPercent), color = setColorForSellStr(curr.sellDiffPercent, prev?.sellDiffPercent ?: curr.sellDiffPercent))
+                TableCell("%.1f".format(curr.buyStrengthPercent), color = setColorForBuyStr(curr.buyStrengthPercent, prev?.buyStrengthPercent ?: curr.buyStrengthPercent))
+                TableCell("%.1f".format(curr.sellStrengthPercent), color = setColorForSellStr(curr.sellStrengthPercent, prev?.sellStrengthPercent ?: curr.sellStrengthPercent))
             }
 
             Divider(color = Color.LightGray)
@@ -158,20 +163,17 @@ fun OptionHistoryScreen(context: Context, optionName: String) {
 
         Divider(color = Color.Gray, thickness = 1.dp)
 
-        LazyColumn(state = listState) {
-            items(optionHistory) { option ->
-                val timeStr = option.timestamp
-                val buyColor = when {
-                    option.buyDiffPercent > 0 -> Color(0xFF2E7D32)
-                    option.buyDiffPercent < 0 -> Color(0xFFC62828)
-                    else -> Color.Gray
-                }
-                val sellColor = when {
-                    option.sellDiffPercent > 0 -> Color(0xFFC62828)
-                    option.sellDiffPercent < 0 -> Color(0xFF2E7D32)
-                    else -> Color.Gray
-                }
-
+        val enrichedList = remember(optionHistory) {
+            optionHistory.mapIndexed { index, curr ->
+                val prev = optionHistory.getOrNull(index - 1)
+                OptionsWithPrevious(curr, prev)
+            }
+        }
+        LazyColumn {
+            items(enrichedList) { item ->
+                val curr = item.current
+                val prev = item.prev
+                val timeStr = curr.timestamp
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -179,12 +181,12 @@ fun OptionHistoryScreen(context: Context, optionName: String) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TableCell(timeStr)
-                    TableCell(convertToLacsString(option.buyQty))
-                    TableCell(convertToLacsString(option.sellQty))
-                    TableCell("%.1f".format(option.buyDiffPercent), color = buyColor)
-                    TableCell("%.1f".format(option.sellDiffPercent), color = sellColor)
-                    TableCell("%.1f".format(option.buyStrengthPercent), color = buyColor)
-                    TableCell("%.1f".format(option.sellStrengthPercent), color = sellColor)
+                    TableCell(convertToLacsString(curr.buyQty), color = setColorForBuyStr(curr.buyQty.toDouble(), prev?.buyQty?.toDouble() ?: curr.buyQty.toDouble()))
+                    TableCell(convertToLacsString(curr.sellQty), color = setColorForSellStr(curr.sellQty.toDouble(), prev?.sellQty?.toDouble() ?: curr.sellQty.toDouble()))
+                    TableCell("%.1f".format(curr.buyDiffPercent), color = setColorForBuyStr(curr.buyDiffPercent, prev?.buyDiffPercent ?: curr.buyDiffPercent))
+                    TableCell("%.1f".format(curr.sellDiffPercent), color = setColorForSellStr(curr.sellDiffPercent, prev?.sellDiffPercent ?: curr.sellDiffPercent))
+                    TableCell("%.1f".format(curr.buyStrengthPercent), color = setColorForBuyStr(curr.buyStrengthPercent, prev?.buyStrengthPercent ?: curr.buyStrengthPercent))
+                    TableCell("%.1f".format(curr.sellStrengthPercent), color = setColorForSellStr(curr.sellStrengthPercent, prev?.sellStrengthPercent ?: curr.sellStrengthPercent))
                 }
 
                 Divider(color = Color.LightGray)

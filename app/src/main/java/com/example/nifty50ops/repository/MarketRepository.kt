@@ -22,4 +22,5 @@ class MarketRepository(private val marketDao: MarketDao) {
 
     suspend fun insertSentimentSummary(sentimentSummary: SentimentSummaryEntity) = marketDao.insertSentimentSummary(sentimentSummary)
     fun getAllSentimentSummary(): Flow<List<SentimentSummaryEntity>> = marketDao.getAllSentimentSummary()
+    fun getLastSentimentSummary(): Flow<List<SentimentSummaryEntity>> = marketDao.getLastSentimentSummary()
 }

@@ -95,4 +95,7 @@ interface MarketDao {
     @Query("SELECT * FROM sentimentSummary_table ORDER BY lastUpdated DESC")
     fun getAllSentimentSummary(): Flow<List<SentimentSummaryEntity>>
 
+    @Query("SELECT * FROM sentimentSummary_table ORDER BY lastUpdated DESC LIMIT 2")
+    fun getLastSentimentSummary(): Flow<List<SentimentSummaryEntity>>
+
 }

@@ -8,10 +8,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,7 +23,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,22 +36,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.nifty50ops.controller.OptionsController
-import com.example.nifty50ops.controller.StockController
 import com.example.nifty50ops.database.MarketDatabase
 import com.example.nifty50ops.model.MarketsEntity
-import com.example.nifty50ops.model.OptionsEntity
 import com.example.nifty50ops.model.OptionsSummaryEntity
 import com.example.nifty50ops.model.SentimentSummaryEntity
-import com.example.nifty50ops.model.StockEntity
 import com.example.nifty50ops.model.StockSummaryEntity
 import com.example.nifty50ops.repository.MarketRepository
-import com.example.nifty50ops.repository.OptionsRepository
-import com.example.nifty50ops.repository.StockRepository
 import com.example.nifty50ops.utils.convertToCrString
 import com.example.nifty50ops.utils.convertToLacsString
+import com.example.nifty50ops.utils.setColorForBuyStr
+import com.example.nifty50ops.utils.setColorForSellStr
 import com.example.nifty50ops.utils.twoDecimalDisplay
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
@@ -66,33 +58,38 @@ fun SentimentSummary(context: Context, navController: NavController) {
     val dao = MarketDatabase.getDatabase(context).marketDao()
     val repository = MarketRepository(dao)
 
-    var stockSummary by remember { mutableStateOf<StockSummaryEntity?>(null) }
-    var optionSummary by remember { mutableStateOf<OptionsSummaryEntity?>(null) }
-    var marketSummary by remember { mutableStateOf<MarketsEntity?>(null) }
+    var sentimentList by remember { mutableStateOf<List<SentimentSummaryEntity>>(emptyList()) }
 
-    LaunchedEffect(Unit) {
-        launch {
-            repository.getLatestStockSummary().collect { stockSummary = it }
-        }
-        launch {
-            repository.getLatestOptionsSummary().collect { optionSummary = it }
-        }
-        launch {
-            repository.getLatestData().collect { marketSummary = it }
+    // Collect sentiment summary data
+    LaunchedEffect(true) {
+        repository.getLastSentimentSummary().collectLatest { newList ->
+            sentimentList = newList.sortedBy { it.lastUpdated }
         }
     }
 
-    if (stockSummary != null && optionSummary != null && marketSummary != null) {
+    if (sentimentList.isNotEmpty()) {
+        val curr = sentimentList.last()
+        val prev = sentimentList.getOrNull(sentimentList.lastIndex - 1)
+
         SummaryCard(
             title = "📊 Sentiment Summary",
             summaryItems = listOf(
-                "PtsDiff" to "%.2f".format(marketSummary!!.pointsChanged.toDouble()),
-                "St1" to "%.2f".format(stockSummary!!.lastMinSentiment),
-                "StAll" to "%.2f".format(stockSummary!!.overAllSentiment),
-                "Op1" to "%.2f".format(optionSummary!!.lastMinSentiment),
-                "OpAll" to "%.2f".format(optionSummary!!.overAllSentiment),
-                "OI1" to "%.2f".format(optionSummary!!.lastMinOIChange),
-                "OIChange" to "%.2f".format(optionSummary!!.overAllOIChange)
+                "PtsDiff" to "%.2f".format(curr.pointsChanged.toDouble()),
+                "St1" to "%.2f".format(curr.stock1MinChange),
+                "StAll" to "%.2f".format(curr.stockOverAllChange),
+                "Op1" to "%.2f".format(curr.option1MinChange),
+                "OpAll" to "%.2f".format(curr.optionOverAllChange),
+                "OI1" to "%.2f".format(curr.oi1MinChange),
+                "OIChange" to "%.2f".format(curr.oiOverAllChange)
+            ),
+            colorOverrides = listOf(
+                setColorForBuyStr(curr.pointsChanged.toDouble(), prev?.pointsChanged?.toDouble() ?: curr.pointsChanged.toDouble()),
+                setColorForBuyStr(curr.stock1MinChange, prev?.stock1MinChange ?: curr.stock1MinChange),
+                setColorForBuyStr(curr.stockOverAllChange, prev?.stockOverAllChange ?: curr.stockOverAllChange),
+                setColorForBuyStr(curr.option1MinChange, prev?.option1MinChange ?: curr.option1MinChange),
+                setColorForBuyStr(curr.optionOverAllChange, prev?.optionOverAllChange ?: curr.optionOverAllChange),
+                setColorForBuyStr(curr.oi1MinChange, prev?.oi1MinChange ?: curr.oi1MinChange),
+                setColorForBuyStr(curr.oiOverAllChange, prev?.oiOverAllChange ?: curr.oiOverAllChange)
             ),
             onClick = {
                 navController.navigate("sentiment_summary_history")
@@ -101,34 +98,48 @@ fun SentimentSummary(context: Context, navController: NavController) {
     }
 }
 
+
 @Composable
 fun StockSummary(context: Context, navController: NavController) {
     val dao = MarketDatabase.getDatabase(context).marketDao()
     val repository = MarketRepository(dao)
 
-    var stockSummary by remember { mutableStateOf<StockSummaryEntity?>(null) }
+//    var stockSummary by remember { mutableStateOf<StockSummaryEntity?>(null) }
+    var stockSummary by remember { mutableStateOf<List<StockSummaryEntity>>(emptyList()) }
 
-    LaunchedEffect(Unit) {
-        repository.getLatestStockSummary().collect { summary ->
-            stockSummary = summary
+    LaunchedEffect(true) {
+        repository.getAllStockSummary().collect { summaries ->
+            stockSummary = summaries
         }
     }
 
-    stockSummary?.let { summary ->
+    if (stockSummary.isNotEmpty()) {
+        val curr = stockSummary.last()
+        val prev = stockSummary.getOrNull(stockSummary.lastIndex - 1)
         SummaryCard(
             title = "📊 Stocks Summary",
             summaryItems = listOf(
-                "Time" to summary.lastUpdated,
-                "Buy Avg %" to "%.2f".format(summary.buyAvg),
-                "Sell Avg %" to "%.2f".format(summary.sellAvg),
-                "LastMin" to "%.2f".format(summary.lastMinSentiment),
-                "BuyStr" to "%.2f".format(summary.stockBuyStr),
-                "SellStr" to "%.2f".format(summary.stockSellStr),
-                "OverAll" to "%.2f".format(summary.overAllSentiment)
+                "Time" to curr.lastUpdated,
+                "Buy Avg %" to "%.2f".format(curr.buyAvg),
+                "Sell Avg %" to "%.2f".format(curr.sellAvg),
+                "LastMin" to "%.2f".format(curr.lastMinSentiment),
+                "BuyStr" to "%.2f".format(curr.stockBuyStr),
+                "SellStr" to "%.2f".format(curr.stockSellStr),
+                "OverAll" to "%.2f".format(curr.overAllSentiment)
             ),
             onClick = {
                 navController.navigate("stock_summary_history")
-            }
+            },
+            colorOverrides = listOf(
+                Color.Black,
+                setColorForBuyStr(curr.buyAvg, prev?.buyAvg ?: curr.buyAvg),
+                setColorForSellStr(curr.sellAvg, prev?.sellAvg ?: curr.sellAvg),
+                setColorForBuyStr(curr.lastMinSentiment, prev?.lastMinSentiment ?: curr.lastMinSentiment),
+                setColorForBuyStr(curr.stockBuyStr, prev?.stockBuyStr ?: curr.stockBuyStr),
+                setColorForBuyStr(curr.stockSellStr, prev?.stockSellStr ?: curr.stockSellStr),
+                setColorForBuyStr(curr.overAllSentiment, prev?.overAllSentiment ?: curr.overAllSentiment),
+
+            )
         )
     }
 }
@@ -138,29 +149,41 @@ fun OptionsSummary(context: Context, navController: NavController) {
     val dao = MarketDatabase.getDatabase(context).marketDao()
     val repository = MarketRepository(dao)
 
-    var optionsSummary by remember { mutableStateOf<OptionsSummaryEntity?>(null) }
+//    var optionsSummary by remember { mutableStateOf<OptionsSummaryEntity?>(null) }
+    var optionsSummary by remember { mutableStateOf<List<OptionsSummaryEntity>>(emptyList()) }
 
     LaunchedEffect(Unit) {
-        repository.getLatestOptionsSummary().collect { summary ->
+        repository.getAllOptionsSummary().collect { summary ->
             optionsSummary = summary
         }
     }
 
-    optionsSummary?.let { summary ->
+    if (optionsSummary.isNotEmpty()) {
+        val curr = optionsSummary.last()
+        val prev = optionsSummary.getOrNull(optionsSummary.lastIndex - 1)
         SummaryCard(
             title = "📉 Options Summary",
             summaryItems = listOf(
-                "Time" to summary.lastUpdated,
-                "Buy Avg %" to "%.2f".format(summary.buyAvg),
-                "Sell Avg %" to "%.2f".format(summary.sellAvg),
-                "LastMin" to "%.2f".format(summary.lastMinSentiment),
-                "BuyStr " to "%.2f".format(summary.optionsBuyStr),
-                "SellStr " to "%.2f".format(summary.optionsSellStr),
-                "OverAll" to "%.2f".format(summary.lastMinSentiment)
+                "Time" to curr.lastUpdated,
+                "Buy Avg %" to "%.2f".format(curr.buyAvg),
+                "Sell Avg %" to "%.2f".format(curr.sellAvg),
+                "LastMin" to "%.2f".format(curr.lastMinSentiment),
+                "BuyStr " to "%.2f".format(curr.optionsBuyStr),
+                "SellStr " to "%.2f".format(curr.optionsSellStr),
+                "OverAll" to "%.2f".format(curr.overAllSentiment)
             ),
             onClick = {
                 navController.navigate("options_summary_history")
-            }
+            },
+            colorOverrides = listOf(
+                Color.Black,
+                setColorForBuyStr(curr.buyAvg, prev?.buyAvg ?: curr.buyAvg),
+                setColorForBuyStr(curr.sellAvg, prev?.sellAvg ?: curr.sellAvg),
+                setColorForBuyStr(curr.lastMinSentiment, prev?.lastMinSentiment ?: curr.lastMinSentiment),
+                setColorForBuyStr(curr.optionsBuyStr, prev?.optionsBuyStr ?: curr.optionsBuyStr),
+                setColorForBuyStr(curr.optionsSellStr, prev?.optionsSellStr ?: curr.optionsSellStr),
+                setColorForBuyStr(curr.overAllSentiment, prev?.overAllSentiment ?: curr.overAllSentiment)
+            )
         )
     }
 }
@@ -170,33 +193,49 @@ fun OISummary(context: Context, navController: NavController) {
     val dao = MarketDatabase.getDatabase(context).marketDao()
     val repository = MarketRepository(dao)
 
-    var optionsSummary by remember { mutableStateOf<OptionsSummaryEntity?>(null) }
+//    var optionsSummary by remember { mutableStateOf<OptionsSummaryEntity?>(null) }
+    var optionsSummary by remember { mutableStateOf<List<OptionsSummaryEntity>>(emptyList()) }
 
     LaunchedEffect(Unit) {
-        repository.getLatestOptionsSummary().collect { summary ->
+        repository.getAllOptionsSummary().collect { summary ->
             optionsSummary = summary
         }
     }
 
-    optionsSummary?.let { summary ->
+    if (optionsSummary.isNotEmpty()) {
+        val curr = optionsSummary.last()
+        val prev = optionsSummary.getOrNull(optionsSummary.lastIndex - 1)
+
         SummaryCard(
             title = "📉 OI Summary",
             summaryItems = listOf(
-                "Time" to summary.lastUpdated,
-                "OI" to convertToCrString(summary.oiQty.toInt()),
-                "OI Change" to convertToLacsString(summary.oiChange.toInt()),
-                "LastMin" to "%.2f".format(summary.lastMinOIChange),
-                "OverAll" to "%.2f".format(summary.overAllOIChange)
+                "Time" to curr.lastUpdated,
+                "OI" to convertToCrString(curr.oiQty.toInt()),
+                "OI Change" to convertToLacsString(curr.oiChange.toInt()),
+                "LastMin" to "%.2f".format(curr.lastMinOIChange),
+                "OverAll" to "%.2f".format(curr.overAllOIChange)
             ),
             onClick = {
                 navController.navigate("oi_summary_history")
-            }
+            },
+            colorOverrides = listOf(
+                Color.Black,
+                setColorForBuyStr(curr.oiQty.toDouble(), prev?.oiQty?.toDouble() ?: curr.oiQty.toDouble()),
+                setColorForBuyStr(curr.oiChange, prev?.oiChange ?: curr.oiChange),
+                setColorForBuyStr(curr.lastMinOIChange, prev?.lastMinOIChange ?: curr.lastMinOIChange),
+                setColorForBuyStr(curr.overAllOIChange, prev?.overAllOIChange ?: curr.overAllOIChange)
+            )
         )
     }
 }
 
 @Composable
-fun SummaryCard(title: String, summaryItems: List<Pair<String, String>>, onClick: (() -> Unit)? = null) {
+fun SummaryCard(
+    title: String,
+    summaryItems: List<Pair<String, String>>,
+    onClick: (() -> Unit)? = null,
+    colorOverrides: List<Color> = emptyList()
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -221,7 +260,8 @@ fun SummaryCard(title: String, summaryItems: List<Pair<String, String>>, onClick
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                summaryItems.forEach { (label, value) ->
+                summaryItems.forEachIndexed { index, (label, value) ->
+                    val valueColor = colorOverrides.getOrNull(index) ?: Color.Black
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = label,
@@ -232,7 +272,7 @@ fun SummaryCard(title: String, summaryItems: List<Pair<String, String>>, onClick
                             text = value,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color.Black
+                            color = valueColor
                         )
                     }
                 }
@@ -240,6 +280,7 @@ fun SummaryCard(title: String, summaryItems: List<Pair<String, String>>, onClick
         }
     }
 }
+
 
 @Composable
 fun SentimentSummaryHistoryScreen_3Tables(context: Context) {
@@ -343,6 +384,10 @@ fun SentimentSummaryHistoryScreen_3Tables(context: Context) {
     }
 }
 
+data class SentimentSummaryWithPrev(
+    val current: SentimentSummaryEntity,
+    val prev: SentimentSummaryEntity?
+)
 @Composable
 fun SentimentSummaryHistoryScreen(context: Context) {
     val dao = MarketDatabase.getDatabase(context).marketDao()
@@ -398,24 +443,31 @@ fun SentimentSummaryHistoryScreen(context: Context) {
             }
 
             Divider(color = Color.Gray, thickness = 1.dp)
-
+            val enrichedList = remember(sentimentList) {
+                sentimentList.mapIndexed { index, curr ->
+                    val prev = sentimentList.getOrNull(index - 1)
+                    SentimentSummaryWithPrev(curr, prev)
+                }
+            }
             LazyColumn(state = listState) {
-                items(sentimentList) { item ->
+                items(enrichedList) { item ->
+                    val curr = item.current
+                    val prev = item.prev
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(3.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        TableCell(item.lastUpdated.take(5), weight = 1f, textAlign = TextAlign.Start)
-                        TableCell(twoDecimalDisplay(item.ltp).take(5), weight = 1f, textAlign = TextAlign.Center)
-                        TableCell(item.pointsChanged.toString(), weight = 1f)
-                        TableCell(twoDecimalDisplay(item.stock1MinChange), weight = 1f)
-                        TableCell(twoDecimalDisplay(item.stockOverAllChange), weight = 1f)
-                        TableCell(twoDecimalDisplay(item.option1MinChange), weight = 1f)
-                        TableCell(twoDecimalDisplay(item.optionOverAllChange), weight = 1f)
-                        TableCell(twoDecimalDisplay(item.oi1MinChange), weight = 1f)
-                        TableCell(twoDecimalDisplay(item.oiOverAllChange), weight = 1f)
+                        TableCell(curr.lastUpdated.take(5), weight = 1f, textAlign = TextAlign.Start)
+                        TableCell(twoDecimalDisplay(curr.ltp).take(5), weight = 1f, textAlign = TextAlign.Center, color = setColorForBuyStr(curr.ltp.toDouble(), prev?.ltp ?: curr.ltp))
+                        TableCell(curr.pointsChanged.toString(), weight = 1f, color = setColorForBuyStr(curr.pointsChanged.toDouble(), prev?.pointsChanged?.toDouble() ?: curr.pointsChanged.toDouble()))
+                        TableCell(twoDecimalDisplay(curr.stock1MinChange), weight = 1f, color = setColorForBuyStr(curr.stock1MinChange, prev?.stock1MinChange ?: curr.stock1MinChange))
+                        TableCell(twoDecimalDisplay(curr.stockOverAllChange), weight = 1f, color = setColorForBuyStr(curr.stockOverAllChange, prev?.stockOverAllChange ?: curr.stockOverAllChange))
+                        TableCell(twoDecimalDisplay(curr.option1MinChange), weight = 1f, color = setColorForBuyStr(curr.option1MinChange, prev?.option1MinChange ?: curr.option1MinChange))
+                        TableCell(twoDecimalDisplay(curr.optionOverAllChange), weight = 1f, color = setColorForBuyStr(curr.optionOverAllChange, prev?.optionOverAllChange ?: curr.optionOverAllChange))
+                        TableCell(twoDecimalDisplay(curr.oi1MinChange), weight = 1f, color = setColorForBuyStr(curr.oi1MinChange, prev?.oi1MinChange ?: curr.oi1MinChange))
+                        TableCell(twoDecimalDisplay(curr.oiOverAllChange), weight = 1f, color = setColorForBuyStr(curr.oiOverAllChange, prev?.oiOverAllChange ?: curr.oiOverAllChange))
                     }
                 }
             }
@@ -423,6 +475,10 @@ fun SentimentSummaryHistoryScreen(context: Context) {
     }
 }
 
+data class StockSummaryWithPrev(
+    val current: StockSummaryEntity,
+    val prev: StockSummaryEntity?
+)
 @Composable
 fun StockSummaryHistoryScreen(context: Context) {
     val stockDao = MarketDatabase.getDatabase(context).marketDao()
@@ -464,40 +520,43 @@ fun StockSummaryHistoryScreen(context: Context) {
         }
 
         Divider(color = Color.Gray, thickness = 1.dp)
+        val enrichedList = remember(stockList) {
+            stockList.mapIndexed { index, curr ->
+                val prev = stockList.getOrNull(index - 1)
+                StockSummaryWithPrev(curr, prev)
+            }
+        }
 
         LazyColumn(state = listState) {
-            items(stockList) { item ->
-                val buyColor = when {
-                    item.stockBuyStr > 0 -> Color(0xFF2E7D32) // Green
-                    item.stockBuyStr < 0 -> Color(0xFFC62828) // Red
-                    else -> Color.Gray
-                }
+            items(enrichedList) { item ->
+                val curr = item.current
+                val prev = item.prev
 
-                val sellColor = when {
-                    item.stockSellStr > 0 -> Color(0xFFC62828) // Red
-                    item.stockSellStr < 0 -> Color(0xFF2E7D32) // Green
-                    else -> Color.Gray
-                }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TableCell(item.lastUpdated.take(5), textAlign = TextAlign.Start)
-                    TableCell(twoDecimalDisplay(item.ltp).take(5), textAlign = TextAlign.Start)
-                    TableCell(twoDecimalDisplay(item.buyAvg), color = buyColor)
-                    TableCell(twoDecimalDisplay(item.sellAvg), color = sellColor)
-                    TableCell(twoDecimalDisplay(item.lastMinSentiment))
-                    TableCell(twoDecimalDisplay(item.stockBuyStr), color = buyColor)
-                    TableCell(twoDecimalDisplay(item.stockSellStr), color = sellColor)
-                    TableCell(twoDecimalDisplay(item.overAllSentiment))
+                    TableCell(curr.lastUpdated.take(5), textAlign = TextAlign.Start)
+                    TableCell(twoDecimalDisplay(curr.ltp).take(5), textAlign = TextAlign.Start, color = setColorForBuyStr(curr.ltp, prev?.ltp ?: curr.ltp))
+                    TableCell(twoDecimalDisplay(curr.buyAvg), color = setColorForBuyStr(curr.buyAvg, prev?.buyAvg ?: curr.buyAvg))
+                    TableCell(twoDecimalDisplay(curr.sellAvg), color = setColorForSellStr(curr.sellAvg, prev?.sellAvg ?: curr.sellAvg))
+                    TableCell(twoDecimalDisplay(curr.lastMinSentiment), color = setColorForBuyStr(curr.lastMinSentiment, prev?.lastMinSentiment ?: curr.lastMinSentiment))
+                    TableCell(twoDecimalDisplay(curr.stockBuyStr), color = setColorForBuyStr(curr.stockBuyStr, prev?.stockBuyStr ?: curr.stockBuyStr))
+                    TableCell(twoDecimalDisplay(curr.stockSellStr), color = setColorForSellStr(curr.stockSellStr, prev?.stockSellStr ?: curr.stockSellStr))
+                    TableCell(twoDecimalDisplay(curr.overAllSentiment),color = setColorForBuyStr(curr.overAllSentiment, prev?.overAllSentiment ?: curr.overAllSentiment))
                 }
             }
         }
+
     }
 }
 
+data class OptionsSummaryWithPrev(
+    val current: OptionsSummaryEntity,
+    val prev: OptionsSummaryEntity?
+)
 @Composable
 fun OptionsSummaryHistoryScreen(context: Context) {
     val optionsDao = MarketDatabase.getDatabase(context).marketDao()
@@ -539,34 +598,31 @@ fun OptionsSummaryHistoryScreen(context: Context) {
         }
 
         Divider(color = Color.Gray, thickness = 1.dp)
-
+        val enrichedList = remember(optionsList) {
+            optionsList.mapIndexed { index, curr ->
+                val prev = optionsList.getOrNull(index - 1)
+                OptionsSummaryWithPrev(curr, prev)
+            }
+        }
         LazyColumn(state = listState) {
-            items(optionsList) { item ->
-                val buyColor = when {
-                    item.optionsBuyStr > 0 -> Color(0xFF2E7D32) // Green
-                    item.optionsBuyStr < 0 -> Color(0xFFC62828) // Red
-                    else -> Color.Gray
-                }
+            items(enrichedList) { item ->
+                val curr = item.current
+                val prev = item.prev
 
-                val sellColor = when {
-                    item.optionsSellStr > 0 -> Color(0xFFC62828) // Red
-                    item.optionsSellStr < 0 -> Color(0xFF2E7D32) // Green
-                    else -> Color.Gray
-                }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TableCell(item.lastUpdated.take(5), textAlign = TextAlign.Start)
-                    TableCell(twoDecimalDisplay(item.ltp).take(5))
-                    TableCell(twoDecimalDisplay(item.buyAvg), color = buyColor)
-                    TableCell(twoDecimalDisplay(item.sellAvg), color = sellColor)
-                    TableCell(twoDecimalDisplay(item.lastMinSentiment))
-                    TableCell(twoDecimalDisplay(item.optionsBuyStr), color = buyColor)
-                    TableCell(twoDecimalDisplay(item.optionsSellStr), color = sellColor)
-                    TableCell(twoDecimalDisplay(item.overAllSentiment))
+                    TableCell(curr.lastUpdated.take(5), textAlign = TextAlign.Start)
+                    TableCell(twoDecimalDisplay(curr.ltp).take(5), color = setColorForBuyStr(curr.ltp, prev?.ltp ?: curr.ltp))
+                    TableCell(twoDecimalDisplay(curr.buyAvg), color = setColorForBuyStr(curr.buyAvg, prev?.buyAvg ?: curr.buyAvg))
+                    TableCell(twoDecimalDisplay(curr.sellAvg), color = setColorForSellStr(curr.sellAvg, prev?.sellAvg ?: curr.sellAvg))
+                    TableCell(twoDecimalDisplay(curr.lastMinSentiment), color = setColorForBuyStr(curr.lastMinSentiment, prev?.lastMinSentiment ?: curr.lastMinSentiment))
+                    TableCell(twoDecimalDisplay(curr.optionsBuyStr), color = setColorForBuyStr(curr.optionsBuyStr, prev?.optionsBuyStr ?: curr.optionsBuyStr))
+                    TableCell(twoDecimalDisplay(curr.optionsSellStr), color = setColorForSellStr(curr.optionsSellStr, prev?.optionsSellStr ?: curr.optionsSellStr))
+                    TableCell(twoDecimalDisplay(curr.overAllSentiment), color = setColorForBuyStr(curr.overAllSentiment, prev?.overAllSentiment ?: curr.overAllSentiment))
                 }
             }
         }
@@ -612,32 +668,28 @@ fun OISummaryHistoryScreen(context: Context) {
         }
 
         Divider(color = Color.Gray, thickness = 1.dp)
-
+        val enrichedList = remember(optionsList) {
+            optionsList.mapIndexed { index, curr ->
+                val prev = optionsList.getOrNull(index - 1)
+                OptionsSummaryWithPrev(curr, prev)
+            }
+        }
         LazyColumn(state = listState) {
-            items(optionsList) { item ->
-                val buyColor = when {
-                    item.optionsBuyStr > 0 -> Color(0xFF2E7D32) // Green
-                    item.optionsBuyStr < 0 -> Color(0xFFC62828) // Red
-                    else -> Color.Gray
-                }
-
-                val sellColor = when {
-                    item.optionsSellStr > 0 -> Color(0xFFC62828) // Red
-                    item.optionsSellStr < 0 -> Color(0xFF2E7D32) // Green
-                    else -> Color.Gray
-                }
+            items(enrichedList) { item ->
+                val curr = item.current
+                val prev = item.prev
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TableCell(item.lastUpdated.take(5))
-                    TableCell(twoDecimalDisplay(item.ltp).take(5))
-                    TableCell(convertToCrString(item.oiQty.toInt()))
-                    TableCell(convertToLacsString(item.oiChange.toInt()))
-                    TableCell(twoDecimalDisplay(item.lastMinOIChange))
-                    TableCell(twoDecimalDisplay(item.overAllOIChange))
+                    TableCell(curr.lastUpdated.take(5))
+                    TableCell(twoDecimalDisplay(curr.ltp).take(5), color = setColorForBuyStr(curr.ltp, prev?.ltp ?: curr.ltp))
+                    TableCell(convertToCrString(curr.oiQty.toInt()), color = setColorForBuyStr(curr.oiQty.toDouble(), prev?.oiQty?.toDouble() ?: curr.oiQty.toDouble()))
+                    TableCell(convertToLacsString(curr.oiChange.toInt()), color = setColorForBuyStr(curr.oiChange.toDouble(), prev?.oiChange?.toDouble() ?: curr.oiChange.toDouble()))
+                    TableCell(twoDecimalDisplay(curr.lastMinOIChange), color = setColorForBuyStr(curr.lastMinOIChange, prev?.lastMinOIChange ?: curr.lastMinOIChange))
+                    TableCell(twoDecimalDisplay(curr.overAllOIChange), color = setColorForBuyStr(curr.overAllOIChange, prev?.overAllOIChange ?: curr.overAllOIChange))
                 }
             }
         }
