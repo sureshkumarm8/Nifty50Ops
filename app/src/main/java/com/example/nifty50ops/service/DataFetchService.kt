@@ -107,6 +107,7 @@ class DataFetchService : Service() {
                         marketController.fetchMarketData(applicationContext)
                         stockController.fetchStockData(applicationContext)
                         optionsController.fetchOptionsData(applicationContext)
+                        marketController.saveSummaries(applicationContext)
                         marketController.saveSentimentSummary(applicationContext)
                     } catch (e: Exception) {
                         println("❌ Error fetching: ${e.localizedMessage}")
@@ -128,8 +129,8 @@ class DataFetchService : Service() {
         val isWeekday = dayOfWeek in Calendar.MONDAY..Calendar.FRIDAY
         val isMarketHours = (hour > 9 || (hour == 9 && minute >= 15)) && (hour < 15 || (hour == 15 && minute <= 30))
 
-//        return isWeekday && isMarketHours
-        return true
+        return isWeekday && isMarketHours
+//        return true
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

@@ -49,7 +49,7 @@ class MainViewModel(context: Context) : ViewModel() {
                 optionsRepo.getAllOptions(),
                 marketRepo.getAllData()
             ) { stocks, options, markets ->
-                computeAndSaveSummary(stocks, options, markets)
+//                computeAndSaveSummary(stocks, options, markets)
             }.launchIn(this)
 
             marketRepo.getAllData().collect { markets ->

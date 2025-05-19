@@ -120,12 +120,12 @@ fun StockSummary(context: Context, navController: NavController) {
             title = "📊 Stocks Summary",
             summaryItems = listOf(
                 "Time" to curr.lastUpdated,
-                "Buy Avg %" to "%.2f".format(curr.buyAvg),
-                "Sell Avg %" to "%.2f".format(curr.sellAvg),
-                "LastMin" to "%.2f".format(curr.lastMinSentiment),
-                "BuyStr" to "%.2f".format(curr.stockBuyStr),
-                "SellStr" to "%.2f".format(curr.stockSellStr),
-                "OverAll" to "%.2f".format(curr.overAllSentiment)
+                "Buy Avg %" to "%.1f".format(curr.buyAvg),
+                "Sell Avg %" to "%.1f".format(curr.sellAvg),
+                "LastMin" to "%.1f".format(curr.lastMinSentiment),
+                "BuyStr" to "%.1f".format(curr.stockBuyStr),
+                "SellStr" to "%.1f".format(curr.stockSellStr),
+                "OverAll" to "%.1f".format(curr.overAllSentiment)
             ),
             onClick = {
                 navController.navigate("stock_summary_history")
@@ -165,12 +165,12 @@ fun OptionsSummary(context: Context, navController: NavController) {
             title = "📉 Options Summary",
             summaryItems = listOf(
                 "Time" to curr.lastUpdated,
-                "Buy Avg %" to "%.2f".format(curr.buyAvg),
-                "Sell Avg %" to "%.2f".format(curr.sellAvg),
-                "LastMin" to "%.2f".format(curr.lastMinSentiment),
-                "BuyStr " to "%.2f".format(curr.optionsBuyStr),
-                "SellStr " to "%.2f".format(curr.optionsSellStr),
-                "OverAll" to "%.2f".format(curr.overAllSentiment)
+                "Buy Avg %" to "%.1f".format(curr.buyAvg),
+                "Sell Avg %" to "%.1f".format(curr.sellAvg),
+                "LastMin" to "%.1f".format(curr.lastMinSentiment),
+                "BuyStr " to "%.1f".format(curr.optionsBuyStr),
+                "SellStr " to "%.1f".format(curr.optionsSellStr),
+                "OverAll" to "%.1f".format(curr.overAllSentiment)
             ),
             onClick = {
                 navController.navigate("options_summary_history")
@@ -539,13 +539,13 @@ fun StockSummaryHistoryScreen(context: Context) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TableCell(curr.lastUpdated.take(5), textAlign = TextAlign.Start)
-                    TableCell(twoDecimalDisplay(curr.ltp).take(5), textAlign = TextAlign.Start, color = setColorForBuyStr(curr.ltp, prev?.ltp ?: curr.ltp))
+                    TableCell(twoDecimalDisplay(curr.ltp).take(5), weight = 1.5f, textAlign = TextAlign.Start, color = setColorForBuyStr(curr.ltp, prev?.ltp ?: curr.ltp))
                     TableCell(twoDecimalDisplay(curr.buyAvg), color = setColorForBuyStr(curr.buyAvg, prev?.buyAvg ?: curr.buyAvg))
                     TableCell(twoDecimalDisplay(curr.sellAvg), color = setColorForSellStr(curr.sellAvg, prev?.sellAvg ?: curr.sellAvg))
                     TableCell(twoDecimalDisplay(curr.lastMinSentiment), color = setColorForBuyStr(curr.lastMinSentiment, prev?.lastMinSentiment ?: curr.lastMinSentiment))
-                    TableCell(twoDecimalDisplay(curr.stockBuyStr), color = setColorForBuyStr(curr.stockBuyStr, prev?.stockBuyStr ?: curr.stockBuyStr))
-                    TableCell(twoDecimalDisplay(curr.stockSellStr), color = setColorForSellStr(curr.stockSellStr, prev?.stockSellStr ?: curr.stockSellStr))
-                    TableCell(twoDecimalDisplay(curr.overAllSentiment),color = setColorForBuyStr(curr.overAllSentiment, prev?.overAllSentiment ?: curr.overAllSentiment))
+                    TableCell(twoDecimalDisplay(curr.stockBuyStr), weight = 1.5f, color = setColorForBuyStr(curr.stockBuyStr, prev?.stockBuyStr ?: curr.stockBuyStr))
+                    TableCell(twoDecimalDisplay(curr.stockSellStr), weight = 1.5f,color = setColorForSellStr(curr.stockSellStr, prev?.stockSellStr ?: curr.stockSellStr))
+                    TableCell(twoDecimalDisplay(curr.overAllSentiment), weight = 1.5f, color = setColorForBuyStr(curr.overAllSentiment, prev?.overAllSentiment ?: curr.overAllSentiment))
                 }
             }
         }
@@ -616,13 +616,13 @@ fun OptionsSummaryHistoryScreen(context: Context) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TableCell(curr.lastUpdated.take(5), textAlign = TextAlign.Start)
-                    TableCell(twoDecimalDisplay(curr.ltp).take(5), color = setColorForBuyStr(curr.ltp, prev?.ltp ?: curr.ltp))
+                    TableCell(twoDecimalDisplay(curr.ltp).take(5), weight = 1.5f,color = setColorForBuyStr(curr.ltp, prev?.ltp ?: curr.ltp))
                     TableCell(twoDecimalDisplay(curr.buyAvg), color = setColorForBuyStr(curr.buyAvg, prev?.buyAvg ?: curr.buyAvg))
                     TableCell(twoDecimalDisplay(curr.sellAvg), color = setColorForSellStr(curr.sellAvg, prev?.sellAvg ?: curr.sellAvg))
                     TableCell(twoDecimalDisplay(curr.lastMinSentiment), color = setColorForBuyStr(curr.lastMinSentiment, prev?.lastMinSentiment ?: curr.lastMinSentiment))
-                    TableCell(twoDecimalDisplay(curr.optionsBuyStr), color = setColorForBuyStr(curr.optionsBuyStr, prev?.optionsBuyStr ?: curr.optionsBuyStr))
-                    TableCell(twoDecimalDisplay(curr.optionsSellStr), color = setColorForSellStr(curr.optionsSellStr, prev?.optionsSellStr ?: curr.optionsSellStr))
-                    TableCell(twoDecimalDisplay(curr.overAllSentiment), color = setColorForBuyStr(curr.overAllSentiment, prev?.overAllSentiment ?: curr.overAllSentiment))
+                    TableCell(twoDecimalDisplay(curr.optionsBuyStr), weight = 1.5f,color = setColorForBuyStr(curr.optionsBuyStr, prev?.optionsBuyStr ?: curr.optionsBuyStr))
+                    TableCell(twoDecimalDisplay(curr.optionsSellStr), weight = 1.5f,color = setColorForSellStr(curr.optionsSellStr, prev?.optionsSellStr ?: curr.optionsSellStr))
+                    TableCell(twoDecimalDisplay(curr.overAllSentiment), weight = 1.5f,color = setColorForBuyStr(curr.overAllSentiment, prev?.overAllSentiment ?: curr.overAllSentiment))
                 }
             }
         }
