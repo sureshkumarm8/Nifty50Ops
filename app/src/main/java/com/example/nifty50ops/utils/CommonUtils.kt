@@ -84,6 +84,10 @@ fun twoDecimalDisplay(value: Double): String {
     return("%.2f".format(value))
 }
 
+fun oneDecimalDisplay(value: Double): String {
+    return("%.1f".format(value))
+}
+
 fun setColorForBuy(value: Double): Color {
     val setColor = when {
         value > 0 -> Color(0xFF2E7D32) // Increased Buys

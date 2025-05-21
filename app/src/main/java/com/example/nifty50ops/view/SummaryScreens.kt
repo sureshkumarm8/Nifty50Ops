@@ -44,6 +44,7 @@ import com.example.nifty50ops.model.StockSummaryEntity
 import com.example.nifty50ops.repository.MarketRepository
 import com.example.nifty50ops.utils.convertToCrString
 import com.example.nifty50ops.utils.convertToLacsString
+import com.example.nifty50ops.utils.oneDecimalDisplay
 import com.example.nifty50ops.utils.setColorForBuyStr
 import com.example.nifty50ops.utils.setColorForSellStr
 import com.example.nifty50ops.utils.twoDecimalDisplay
@@ -427,22 +428,21 @@ fun SentimentSummaryHistoryScreen(context: Context) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 3.dp)
+                    .padding(vertical = 2.dp)
                     .background(Color(0xFF2196F3)),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TableHeaderCell("Time", weight = 1f, textAlign = TextAlign.Start)
-                TableHeaderCell("LTP", weight = 1f, textAlign = TextAlign.Center)
-                TableHeaderCell("Points Diff", weight = 1f)
-                TableHeaderCell("Stock 1Min", weight = 1f)
-                TableHeaderCell("Stock OverAll", weight = 1f)
-                TableHeaderCell("Options 1Min", weight = 1f)
-                TableHeaderCell("Options OverAll", weight = 1f)
-                TableHeaderCell("OI 1Min", weight = 1f)
-                TableHeaderCell("OI Change", weight = 1f)
+                TableHeaderCell("Time",textAlign = TextAlign.Start)
+                TableHeaderCell("LTP",textAlign = TextAlign.Center)
+                TableHeaderCell("Point Diff")
+                TableHeaderCell("Stock 1Min")
+                TableHeaderCell("Stock OverAll")
+                TableHeaderCell("Options 1Min")
+                TableHeaderCell("Options OverAll")
+                TableHeaderCell("OI 1Min")
+                TableHeaderCell("OI Change")
             }
 
-            Divider(color = Color.Gray, thickness = 1.dp)
             val enrichedList = remember(sentimentList) {
                 sentimentList.mapIndexed { index, curr ->
                     val prev = sentimentList.getOrNull(index - 1)
@@ -456,18 +456,18 @@ fun SentimentSummaryHistoryScreen(context: Context) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(3.dp),
+                            .padding(2.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        TableCell(curr.lastUpdated.take(5), weight = 1f, textAlign = TextAlign.Start)
-                        TableCell(twoDecimalDisplay(curr.ltp).take(5), weight = 1f, textAlign = TextAlign.Center, color = setColorForBuyStr(curr.ltp.toDouble(), prev?.ltp ?: curr.ltp))
-                        TableCell(curr.pointsChanged.toString(), weight = 1f, color = setColorForBuyStr(curr.pointsChanged.toDouble(), prev?.pointsChanged?.toDouble() ?: curr.pointsChanged.toDouble()))
-                        TableCell(twoDecimalDisplay(curr.stock1MinChange), weight = 1f, color = setColorForBuyStr(curr.stock1MinChange, prev?.stock1MinChange ?: curr.stock1MinChange))
-                        TableCell(twoDecimalDisplay(curr.stockOverAllChange), weight = 1f, color = setColorForBuyStr(curr.stockOverAllChange, prev?.stockOverAllChange ?: curr.stockOverAllChange))
-                        TableCell(twoDecimalDisplay(curr.option1MinChange), weight = 1f, color = setColorForBuyStr(curr.option1MinChange, prev?.option1MinChange ?: curr.option1MinChange))
-                        TableCell(twoDecimalDisplay(curr.optionOverAllChange), weight = 1f, color = setColorForBuyStr(curr.optionOverAllChange, prev?.optionOverAllChange ?: curr.optionOverAllChange))
-                        TableCell(twoDecimalDisplay(curr.oi1MinChange), weight = 1f, color = setColorForBuyStr(curr.oi1MinChange, prev?.oi1MinChange ?: curr.oi1MinChange))
-                        TableCell(twoDecimalDisplay(curr.oiOverAllChange), weight = 1f, color = setColorForBuyStr(curr.oiOverAllChange, prev?.oiOverAllChange ?: curr.oiOverAllChange))
+                        TableCell(curr.lastUpdated.take(5), textAlign = TextAlign.Start, color = Color.Gray)
+                        TableCell(twoDecimalDisplay(curr.ltp).take(5), textAlign = TextAlign.Center, color = setColorForBuyStr(curr.ltp.toDouble(), prev?.ltp ?: curr.ltp))
+                        TableCell(curr.pointsChanged.toString(), color = setColorForBuyStr(curr.pointsChanged.toDouble(), prev?.pointsChanged?.toDouble() ?: curr.pointsChanged.toDouble()))
+                        TableCell(twoDecimalDisplay(curr.stock1MinChange), color = setColorForBuyStr(curr.stock1MinChange, prev?.stock1MinChange ?: curr.stock1MinChange))
+                        TableCell(twoDecimalDisplay(curr.stockOverAllChange), color = setColorForBuyStr(curr.stockOverAllChange, prev?.stockOverAllChange ?: curr.stockOverAllChange))
+                        TableCell(twoDecimalDisplay(curr.option1MinChange), color = setColorForBuyStr(curr.option1MinChange, prev?.option1MinChange ?: curr.option1MinChange))
+                        TableCell(twoDecimalDisplay(curr.optionOverAllChange), color = setColorForBuyStr(curr.optionOverAllChange, prev?.optionOverAllChange ?: curr.optionOverAllChange))
+                        TableCell(twoDecimalDisplay(curr.oi1MinChange), color = setColorForBuyStr(curr.oi1MinChange, prev?.oi1MinChange ?: curr.oi1MinChange))
+                        TableCell(twoDecimalDisplay(curr.oiOverAllChange), color = setColorForBuyStr(curr.oiOverAllChange, prev?.oiOverAllChange ?: curr.oiOverAllChange))
                     }
                 }
             }
@@ -505,18 +505,18 @@ fun StockSummaryHistoryScreen(context: Context) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 6.dp)
+                .padding(vertical = 2.dp)
                 .background(Color(0xFF2196F3)),
             verticalAlignment = Alignment.CenterVertically
         ) {
             TableHeaderCell("Time", textAlign = TextAlign.Center)
-            TableHeaderCell("LTP", textAlign = TextAlign.Center)
-            TableHeaderCell("Buy Diff%")
-            TableHeaderCell("Sell Diff%")
-            TableHeaderCell("1Min Diff%")
-            TableHeaderCell("Buy Str%")
-            TableHeaderCell("Sell Str%")
+            TableHeaderCell("LTP ", textAlign = TextAlign.Center)
+            TableHeaderCell("1Min Diff")
+            TableHeaderCell("Buy  Diff")
+            TableHeaderCell("Sell Diff")
             TableHeaderCell("Over All%")
+            TableHeaderCell("Buy  Str%")
+            TableHeaderCell("Sell Str%")
         }
 
         Divider(color = Color.Gray, thickness = 1.dp)
@@ -535,17 +535,18 @@ fun StockSummaryHistoryScreen(context: Context) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(6.dp),
+                        .padding(2.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TableCell(curr.lastUpdated.take(5), textAlign = TextAlign.Start)
-                    TableCell(twoDecimalDisplay(curr.ltp).take(5), weight = 1.5f, textAlign = TextAlign.Start, color = setColorForBuyStr(curr.ltp, prev?.ltp ?: curr.ltp))
-                    TableCell(twoDecimalDisplay(curr.buyAvg), weight = 1.5f,color = setColorForBuyStr(curr.buyAvg, prev?.buyAvg ?: curr.buyAvg))
-                    TableCell(twoDecimalDisplay(curr.sellAvg), weight = 1.5f,color = setColorForSellStr(curr.sellAvg, prev?.sellAvg ?: curr.sellAvg))
-                    TableCell(twoDecimalDisplay(curr.lastMinSentiment), weight = 1.5f,color = setColorForBuyStr(curr.lastMinSentiment, prev?.lastMinSentiment ?: curr.lastMinSentiment))
-                    TableCell(twoDecimalDisplay(curr.stockBuyStr), weight = 1.5f, color = setColorForBuyStr(curr.stockBuyStr, prev?.stockBuyStr ?: curr.stockBuyStr))
-                    TableCell(twoDecimalDisplay(curr.stockSellStr), weight = 1.5f,color = setColorForSellStr(curr.stockSellStr, prev?.stockSellStr ?: curr.stockSellStr))
-                    TableCell(twoDecimalDisplay(curr.overAllSentiment), weight = 1.5f, color = setColorForBuyStr(curr.overAllSentiment, prev?.overAllSentiment ?: curr.overAllSentiment))
+                    TableCell(curr.lastUpdated.take(5), weight = 1.5f,textAlign = TextAlign.Start, color = Color.Gray)
+                    TableCell(oneDecimalDisplay(curr.ltp).take(5), weight = 1.5f, textAlign = TextAlign.Start, color = setColorForBuyStr(curr.ltp, prev?.ltp ?: curr.ltp))
+                    TableCell(oneDecimalDisplay(curr.lastMinSentiment), weight = 1.5f,color = setColorForBuyStr(curr.lastMinSentiment, prev?.lastMinSentiment ?: curr.lastMinSentiment))
+                    TableCell(oneDecimalDisplay(curr.buyAvg), weight = 1.5f,color = setColorForBuyStr(curr.buyAvg, prev?.buyAvg ?: curr.buyAvg))
+                    TableCell(oneDecimalDisplay(curr.sellAvg), weight = 1.5f,color = setColorForSellStr(curr.sellAvg, prev?.sellAvg ?: curr.sellAvg))
+                    TableCell(oneDecimalDisplay(curr.overAllSentiment), weight = 1.5f, color = setColorForBuyStr(curr.overAllSentiment, prev?.overAllSentiment ?: curr.overAllSentiment))
+                    TableCell(oneDecimalDisplay(curr.stockBuyStr), weight = 1.5f, color = setColorForBuyStr(curr.stockBuyStr, prev?.stockBuyStr ?: curr.stockBuyStr))
+                    TableCell(oneDecimalDisplay(curr.stockSellStr), weight = 1.5f,color = setColorForSellStr(curr.stockSellStr, prev?.stockSellStr ?: curr.stockSellStr))
+
                 }
             }
         }
@@ -583,18 +584,18 @@ fun OptionsSummaryHistoryScreen(context: Context) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 6.dp)
+                .padding(vertical = 2.dp)
                 .background(Color(0xFF2196F3)),
             verticalAlignment = Alignment.CenterVertically
         ) {
             TableHeaderCell("Time", textAlign = TextAlign.Center)
             TableHeaderCell("LTP", textAlign = TextAlign.Center)
-            TableHeaderCell("Buy Diff%")
-            TableHeaderCell("Sell Diff%")
-            TableHeaderCell("1Min Diff%")
-            TableHeaderCell("Buy Str%")
-            TableHeaderCell("Sell Str%")
+            TableHeaderCell("1Min Diff")
+            TableHeaderCell("Buy  Diff")
+            TableHeaderCell("Sell Diff")
             TableHeaderCell("Over All%")
+            TableHeaderCell("Buy  Str%")
+            TableHeaderCell("Sell Str%")
         }
 
         Divider(color = Color.Gray, thickness = 1.dp)
@@ -612,17 +613,17 @@ fun OptionsSummaryHistoryScreen(context: Context) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(6.dp),
+                        .padding(2.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TableCell(curr.lastUpdated.take(5), textAlign = TextAlign.Start)
-                    TableCell(twoDecimalDisplay(curr.ltp).take(5), weight = 1.5f,color = setColorForBuyStr(curr.ltp, prev?.ltp ?: curr.ltp))
-                    TableCell(twoDecimalDisplay(curr.buyAvg), weight = 1.5f,color = setColorForBuyStr(curr.buyAvg, prev?.buyAvg ?: curr.buyAvg))
-                    TableCell(twoDecimalDisplay(curr.sellAvg), weight = 1.5f,color = setColorForSellStr(curr.sellAvg, prev?.sellAvg ?: curr.sellAvg))
-                    TableCell(twoDecimalDisplay(curr.lastMinSentiment), weight = 1.5f,color = setColorForBuyStr(curr.lastMinSentiment, prev?.lastMinSentiment ?: curr.lastMinSentiment))
-                    TableCell(twoDecimalDisplay(curr.optionsBuyStr), weight = 1.5f,color = setColorForBuyStr(curr.optionsBuyStr, prev?.optionsBuyStr ?: curr.optionsBuyStr))
-                    TableCell(twoDecimalDisplay(curr.optionsSellStr), weight = 1.5f,color = setColorForSellStr(curr.optionsSellStr, prev?.optionsSellStr ?: curr.optionsSellStr))
-                    TableCell(twoDecimalDisplay(curr.overAllSentiment), weight = 1.5f,color = setColorForBuyStr(curr.overAllSentiment, prev?.overAllSentiment ?: curr.overAllSentiment))
+                    TableCell(curr.lastUpdated.take(5), weight = 1.5f, textAlign = TextAlign.Start, color = Color.Gray)
+                    TableCell(twoDecimalDisplay(curr.ltp).take(5), weight = 1.5f, color = setColorForBuyStr(curr.ltp, prev?.ltp ?: curr.ltp))
+                    TableCell(oneDecimalDisplay(curr.lastMinSentiment), weight = 1.5f,color = setColorForBuyStr(curr.lastMinSentiment, prev?.lastMinSentiment ?: curr.lastMinSentiment))
+                    TableCell(oneDecimalDisplay(curr.buyAvg), weight = 1.5f,color = setColorForBuyStr(curr.buyAvg, prev?.buyAvg ?: curr.buyAvg))
+                    TableCell(oneDecimalDisplay(curr.sellAvg), weight = 1.5f,color = setColorForSellStr(curr.sellAvg, prev?.sellAvg ?: curr.sellAvg))
+                    TableCell(oneDecimalDisplay(curr.overAllSentiment), weight = 1.5f,color = setColorForBuyStr(curr.overAllSentiment, prev?.overAllSentiment ?: curr.overAllSentiment))
+                    TableCell(oneDecimalDisplay(curr.optionsBuyStr), weight = 1.5f,color = setColorForBuyStr(curr.optionsBuyStr, prev?.optionsBuyStr ?: curr.optionsBuyStr))
+                    TableCell(oneDecimalDisplay(curr.optionsSellStr), weight = 1.5f,color = setColorForSellStr(curr.optionsSellStr, prev?.optionsSellStr ?: curr.optionsSellStr))
                 }
             }
         }
@@ -684,7 +685,7 @@ fun OISummaryHistoryScreen(context: Context) {
                         .padding(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TableCell(curr.lastUpdated.take(5))
+                    TableCell(curr.lastUpdated.take(5), color = Color.Gray)
                     TableCell(twoDecimalDisplay(curr.ltp).take(5), color = setColorForBuyStr(curr.ltp, prev?.ltp ?: curr.ltp))
                     TableCell(convertToCrString(curr.oiQty.toInt()), color = setColorForBuyStr(curr.oiQty.toDouble(), prev?.oiQty?.toDouble() ?: curr.oiQty.toDouble()))
                     TableCell(convertToLacsString(curr.oiChange.toInt()), color = setColorForBuyStr(curr.oiChange.toDouble(), prev?.oiChange?.toDouble() ?: curr.oiChange.toDouble()))

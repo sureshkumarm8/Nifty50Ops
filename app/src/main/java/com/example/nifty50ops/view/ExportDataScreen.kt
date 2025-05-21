@@ -50,6 +50,13 @@ fun ExportDataScreen(context: Context = LocalContext.current) {
             }
         }
 
+        ExportActionButton("Export Sentiment Summary") {
+            scope.launch(Dispatchers.IO) {
+                ExportHelper.exportSentimentSummary(context, marketRepo)
+                showToast(context, "Sentiment summary exported successfully.")
+            }
+        }
+
         ExportActionButton("Export Stock Summary") {
             scope.launch(Dispatchers.IO) {
                 ExportHelper.exportStockSummary(context, marketRepo)
@@ -66,7 +73,7 @@ fun ExportDataScreen(context: Context = LocalContext.current) {
 
         ExportActionButton("Export ALL Tables") {
             scope.launch(Dispatchers.IO) {
-                ExportHelper.exportAllTables(context, stockRepo, optionRepo, marketRepo)
+                ExportHelper.exportAllTablesToExcel(context, stockRepo, optionRepo, marketRepo)
                 showToast(context, "All tables exported successfully.")
             }
         }

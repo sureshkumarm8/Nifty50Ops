@@ -11,7 +11,10 @@ import com.opencsv.CSVWriter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.apache.poi.ss.usermodel.Sheet
+import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import java.io.File
+import java.io.FileOutputStream
 import java.io.FileWriter
 import java.text.SimpleDateFormat
 import java.util.*
@@ -31,6 +34,12 @@ object ExportHelper {
             exportToCSV(context, "options_table.csv", rows)
         }
     }
+    fun exportSentimentSummary(context: Context, repo: MarketRepository) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val rows = CSVDataFormatter.formatSentimentSummary(repo.getAllSentimentSummary())
+            exportToCSV(context, "sentiment_summary.csv", rows)
+        }
+    }
 
     fun exportStockSummary(context: Context, repo: MarketRepository) {
         CoroutineScope(Dispatchers.IO).launch {
@@ -46,38 +55,66 @@ object ExportHelper {
         }
     }
 
-    fun exportAllTables(
+
+    fun exportAllTablesToExcel(
         context: Context,
         stockRepo: StockRepository,
         optionRepo: OptionsRepository,
         marketRepo: MarketRepository
     ) {
         CoroutineScope(Dispatchers.IO).launch {
+            val workbook = XSSFWorkbook()
+
+            fun Sheet.addTable(headers: List<String>, data: List<List<String>>) {
+                var rowIndex = 0
+                val headerRow = createRow(rowIndex++)
+                headers.forEachIndexed { col, text -> headerRow.createCell(col).setCellValue(text) }
+
+                data.forEach { rowData ->
+                    val row = createRow(rowIndex++)
+                    rowData.forEachIndexed { col, cellData ->
+                        row.createCell(col).setCellValue(cellData)
+                    }
+                }
+            }
+
+            // Sheet 1 - Stock Table
+            val stockSheet = workbook.createSheet("Stocks")
+            val stockData = CSVDataFormatter.formatStocks(stockRepo.getAllStocksExport())
+            stockSheet.addTable(stockData.first(), stockData.drop(1))
+
+            // Sheet 2 - Options Table
+            val optionsSheet = workbook.createSheet("Options")
+            val optionsData = CSVDataFormatter.formatOptions(optionRepo.getAllOptionsExport())
+            optionsSheet.addTable(optionsData.first(), optionsData.drop(1))
+
+            // Sheet 3 - Sentiment Summary
+            val sentimentSheet = workbook.createSheet("Sentiment Summary")
+            val sentimentData = CSVDataFormatter.formatSentimentSummary(marketRepo.getAllSentimentSummary())
+            sentimentSheet.addTable(sentimentData.first(), sentimentData.drop(1))
+
+            // Sheet 4 - Stock Summary
+            val stockSummarySheet = workbook.createSheet("Stock Summary")
+            val stockSummaryData = CSVDataFormatter.formatStockSummary(marketRepo.getAllStockSummary())
+            stockSummarySheet.addTable(stockSummaryData.first(), stockSummaryData.drop(1))
+
+            // Sheet 5 - Options Summary
+            val optionsSummarySheet = workbook.createSheet("Options Summary")
+            val optionsSummaryData = CSVDataFormatter.formatOptionsSummary(marketRepo.getAllOptionsSummary())
+            optionsSummarySheet.addTable(optionsSummaryData.first(), optionsSummaryData.drop(1))
+
+            // Save to file
             val time = timeStamp()
             val file = File(
                 context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS),
-                "$time-AllTables.csv"
+                "$time-AllTables.xlsx"
             )
-            val writer = CSVWriter(FileWriter(file))
-
-            writer.writeNext(arrayOf("=== Stock Table ==="))
-            CSVDataFormatter.formatStocks(stockRepo.getAllStocks()).forEach { writer.writeNext(it.toTypedArray()) }
-
-            writer.writeNext(arrayOf("")) // Blank line
-            writer.writeNext(arrayOf("=== Options Table ==="))
-            CSVDataFormatter.formatOptions(optionRepo.getAllOptions()).forEach { writer.writeNext(it.toTypedArray()) }
-
-            writer.writeNext(arrayOf(""))
-            writer.writeNext(arrayOf("=== Stock Summary Table ==="))
-            CSVDataFormatter.formatStockSummary(marketRepo.getAllStockSummary()).forEach { writer.writeNext(it.toTypedArray()) }
-
-            writer.writeNext(arrayOf(""))
-            writer.writeNext(arrayOf("=== Options Summary Table ==="))
-            CSVDataFormatter.formatOptionsSummary(marketRepo.getAllOptionsSummary()).forEach { writer.writeNext(it.toTypedArray()) }
-
-            writer.close()
+            FileOutputStream(file).use { workbook.write(it) }
+            Log.i("FILE PATH", "exportAllTables: " + file)
+            workbook.close()
         }
     }
+
 
     private fun exportToCSV(context: Context, fileName: String, rows: List<List<String>>) {
         val file = File(

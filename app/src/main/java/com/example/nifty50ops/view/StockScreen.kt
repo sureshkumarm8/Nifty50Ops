@@ -58,7 +58,7 @@ fun StockScreen(context: Context, navController: NavController) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 10.dp)
+                .padding(vertical = 4.dp)
                 .background(Color(0xFF2196F3)),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -145,6 +145,7 @@ fun RowScope.TableCell(
             .padding(6.dp),
         color = color,
         fontSize = fontSize,
+        fontWeight = FontWeight.Bold,
         style = MaterialTheme.typography.bodyMedium,
         textAlign = textAlign
     )
