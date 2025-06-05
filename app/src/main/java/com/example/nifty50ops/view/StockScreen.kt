@@ -66,10 +66,11 @@ fun StockScreen(context: Context, navController: NavController) {
             TableHeaderCell("LTP")
             TableHeaderCell("Buy Qty")
             TableHeaderCell("Sell Qty")
-            TableHeaderCell("Buy %")
-            TableHeaderCell("Sell %")
             TableHeaderCell("BuyStr %")
             TableHeaderCell("SellStr %")
+            TableHeaderCell("Buy %")
+            TableHeaderCell("Sell %")
+
         }
 
         Divider(color = Color.Gray, thickness = 1.dp)
@@ -104,10 +105,10 @@ fun StockTable(stockList: List<StockEntity>, onRowClick: (String) -> Unit) {
                 TableCell("%.0f".format(curr.ltp), fontSize = 12.sp, color = setColorForBuyStr(curr.ltp, prev?.ltp ?: curr.ltp))
                 TableCell(convertToLacsString(curr.buyQty), color = setColorForBuyStr(curr.buyQty.toDouble(), prev?.buyQty?.toDouble() ?: curr.buyQty.toDouble()))
                 TableCell(convertToLacsString(curr.sellQty), color = setColorForSellStr(curr.sellQty.toDouble(), prev?.sellQty?.toDouble() ?: curr.sellQty.toDouble()))
-                TableCell("%.1f".format(curr.buyDiffPercent), color = setColorForBuyStr(curr.buyDiffPercent, prev?.buyDiffPercent ?: curr.buyDiffPercent))
-                TableCell("%.1f".format(curr.sellDiffPercent), color = setColorForSellStr(curr.sellDiffPercent, prev?.sellDiffPercent ?: curr.sellDiffPercent))
                 TableCell("%.1f".format(curr.buyStrengthPercent), color = setColorForBuyStr(curr.buyStrengthPercent, prev?.buyStrengthPercent ?: curr.buyStrengthPercent))
                 TableCell("%.1f".format(curr.sellStrengthPercent), color = setColorForSellStr(curr.sellStrengthPercent, prev?.sellStrengthPercent ?: curr.sellStrengthPercent))
+                TableCell("%.1f".format(curr.buyDiffPercent), color = setColorForBuyStr(curr.buyDiffPercent, prev?.buyDiffPercent ?: curr.buyDiffPercent))
+                TableCell("%.1f".format(curr.sellDiffPercent), color = setColorForSellStr(curr.sellDiffPercent, prev?.sellDiffPercent ?: curr.sellDiffPercent))
             }
 
             Divider(color = Color.LightGray)
@@ -192,10 +193,11 @@ fun StockHistoryScreen(context: Context, stockName: String) {
             TableHeaderCell("LTP")
             TableHeaderCell("Buy Qty")
             TableHeaderCell("Sell Qty")
-            TableHeaderCell("Buy %")
-            TableHeaderCell("Sell %")
             TableHeaderCell("BuyStr %")
             TableHeaderCell("SellStr %")
+            TableHeaderCell("Buy %")
+            TableHeaderCell("Sell %")
+
         }
 
         Divider(color = Color.Gray, thickness = 1.dp)
@@ -219,10 +221,10 @@ fun StockHistoryScreen(context: Context, stockName: String) {
                     TableCell(curr.ltp.toString(), color = setColorForBuyStr(curr.ltp, prev?.ltp ?: curr.ltp))
                     TableCell(convertToLacsString(curr.buyQty), color = setColorForBuyStr(curr.buyQty.toDouble(), prev?.buyQty?.toDouble() ?: curr.buyQty.toDouble()))
                     TableCell(convertToLacsString(curr.sellQty), color = setColorForSellStr(curr.sellQty.toDouble(), prev?.sellQty?.toDouble() ?: curr.sellQty.toDouble()))
-                    TableCell("%.1f".format(curr.buyDiffPercent), color = setColorForBuyStr(curr.buyDiffPercent, prev?.buyDiffPercent ?: curr.buyDiffPercent))
-                    TableCell("%.1f".format(curr.sellDiffPercent), color = setColorForSellStr(curr.sellDiffPercent, prev?.sellDiffPercent ?: curr.sellDiffPercent))
                     TableCell("%.1f".format(curr.buyStrengthPercent), color = setColorForBuyStr(curr.buyStrengthPercent, prev?.buyStrengthPercent ?: curr.buyStrengthPercent))
                     TableCell("%.1f".format(curr.sellStrengthPercent), color = setColorForSellStr(curr.sellStrengthPercent, prev?.sellStrengthPercent ?: curr.sellStrengthPercent))
+                    TableCell("%.1f".format(curr.buyDiffPercent), color = setColorForBuyStr(curr.buyDiffPercent, prev?.buyDiffPercent ?: curr.buyDiffPercent))
+                    TableCell("%.1f".format(curr.sellDiffPercent), color = setColorForSellStr(curr.sellDiffPercent, prev?.sellDiffPercent ?: curr.sellDiffPercent))
                 }
 
                 Divider(color = Color.LightGray)

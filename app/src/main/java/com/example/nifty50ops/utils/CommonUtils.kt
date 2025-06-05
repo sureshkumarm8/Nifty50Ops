@@ -6,6 +6,9 @@ import android.util.Log
 import androidx.compose.ui.graphics.Color
 import com.example.nifty50ops.network.ApiService
 import java.io.File
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+
 
 fun readSecurityIdToSymbolMap(context: Context): Map<Int, String> {
     val file = File(context.filesDir, "option_data/NiftyScrips.txt")
@@ -52,7 +55,10 @@ fun readJwtToken(context: Context) {
 }
 
 fun copyFromDownloadsToInternal(context: Context): Boolean {
-    val downloadFile = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "NiftyScrips.txt")
+    val downloadFile = File(
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+        "NiftyScrips.txt"
+    )
     val internalDir = File(context.filesDir, "option_data")
     if (!internalDir.exists()) internalDir.mkdirs()
     val internalFile = File(internalDir, "NiftyScrips.txt")
@@ -81,11 +87,11 @@ fun convertToCrString(value: Int): String {
 }
 
 fun twoDecimalDisplay(value: Double): String {
-    return("%.2f".format(value))
+    return ("%.2f".format(value))
 }
 
 fun oneDecimalDisplay(value: Double): String {
-    return("%.1f".format(value))
+    return ("%.1f".format(value))
 }
 
 fun setColorForBuy(value: Double): Color {

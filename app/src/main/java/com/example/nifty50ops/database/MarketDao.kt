@@ -23,8 +23,11 @@ interface MarketDao {
     @Query("SELECT * FROM market_table ORDER BY timestamp DESC LIMIT 1")
     fun getLatestMarketData(): Flow<MarketsEntity>
 
+    @Query("SELECT * FROM market_table WHERE timestamp = :timestamp LIMIT 1")
+    suspend fun getDataByTimestamp(timestamp: String): MarketsEntity?
 
-//StocksScreen
+
+    //StocksScreen
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertStock(stock: StockEntity)
 
@@ -55,7 +58,8 @@ interface MarketDao {
     @Query("SELECT * FROM stocksSummary_table ORDER BY lastUpdated")
     fun getAllStockSummary(): Flow<List<StockSummaryEntity>>
 
-
+    @Query("SELECT * FROM stocksSummary_table ORDER BY lastUpdated DESC LIMIT 1")
+    suspend fun getLatestStockSummarySync(): StockSummaryEntity?
 
     //OptionsScreen
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -87,6 +91,9 @@ interface MarketDao {
 
     @Query("SELECT * FROM optionsSummary_table ORDER BY lastUpdated")
     fun getAllOptionsSummary(): Flow<List<OptionsSummaryEntity>>
+
+    @Query("SELECT * FROM optionsSummary_table ORDER BY lastUpdated DESC LIMIT 1")
+    suspend fun getLatestOptionsSummarySync(): OptionsSummaryEntity?
 
     //SentimentSummaryScreen
     @Insert(onConflict = OnConflictStrategy.REPLACE)

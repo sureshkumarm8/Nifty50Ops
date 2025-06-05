@@ -8,7 +8,8 @@ data class MarketsEntity(
     @PrimaryKey val timestamp: String,
     val name: String,
     val ltp: Double,
-    val pointsChanged: Int
+    val pointsChanged: Int,
+    val summary: String
 )
 
 @Entity(tableName = "stocksSummary_table")

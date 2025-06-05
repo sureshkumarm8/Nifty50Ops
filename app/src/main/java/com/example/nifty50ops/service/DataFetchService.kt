@@ -109,6 +109,7 @@ class DataFetchService : Service() {
                         optionsController.fetchOptionsData(applicationContext)
                         marketController.saveSummaries(applicationContext)
                         marketController.saveSentimentSummary(applicationContext)
+                        marketController.generateMarketReviewSummary(applicationContext)
                     } catch (e: Exception) {
                         println("❌ Error fetching: ${e.localizedMessage}")
                     }
