@@ -94,10 +94,3 @@ fun SettingsScreen(context: Context) {
     }
 }
 
-@Composable
-fun AboutScreen(context: Context) {
-    Box(Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Made with 💙 by You\nVersion 1.0", fontSize = 18.sp)
-    }
-}
-

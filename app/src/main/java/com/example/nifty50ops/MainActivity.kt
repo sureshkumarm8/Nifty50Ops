@@ -115,7 +115,7 @@ class MainActivity : ComponentActivity() {
             DrawerItem("main", "🏠 Home"),
             DrawerItem("stocks", "📈 Stocks"),
             DrawerItem("options", "📊 Options"),
-            DrawerItem("market_overview", "⚙️ Market Overview"),
+            DrawerItem("market_overview", "⚙️ Market Live Analysis"),
             DrawerItem("csv_export", "💾 Export CSV"),
             DrawerItem("about", "ℹ️ About")
         )
@@ -218,7 +218,7 @@ class MainActivity : ComponentActivity() {
             currentRoute == "stocks" -> "📈 Nifty 50 Stock Updates"
             currentRoute == "options" -> "📊 Weekly Nifty 50 Options"
             currentRoute == "csv_export" -> "💾 Export CSV"
-            currentRoute == "market_overview" -> "⚙️ Market Overview"
+            currentRoute == "market_overview" -> "⚙️ Market Live Analysis"
             currentRoute == "about" -> "ℹ️ About"
             currentRoute == "sentiment_summary_history" -> "📈 Sentiment Summary History"
             currentRoute == "stock_summary_history" -> "📈 Stock Summary History"
