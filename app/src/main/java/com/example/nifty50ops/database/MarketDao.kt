@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.example.nifty50ops.model.MarketInsightEntity
 import com.example.nifty50ops.model.MarketsEntity
 import com.example.nifty50ops.model.OptionsEntity
 import com.example.nifty50ops.model.OptionsSummaryEntity
@@ -104,5 +105,17 @@ interface MarketDao {
 
     @Query("SELECT * FROM sentimentSummary_table ORDER BY lastUpdated DESC LIMIT 2")
     fun getLastSentimentSummary(): Flow<List<SentimentSummaryEntity>>
+
+
+    //MarketInsightsScreen
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertMarketInsight(insight: MarketInsightEntity)
+
+    @Query("SELECT * FROM market_insights_table ORDER BY timestamp DESC")
+    fun getAllMarketInsights(): Flow<List<MarketInsightEntity>>
+
+    @Query("SELECT * FROM market_insights_table WHERE intervalMinutes = :intervalMinutes ORDER BY timestamp ASC")
+    fun getMarketInsightsByInterval(intervalMinutes: String): Flow<List<MarketInsightEntity>>
+
 
 }

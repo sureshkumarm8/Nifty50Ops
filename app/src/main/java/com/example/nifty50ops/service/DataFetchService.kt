@@ -16,8 +16,13 @@ import com.example.nifty50ops.database.MarketDatabase
 import com.example.nifty50ops.repository.MarketRepository
 import com.example.nifty50ops.repository.OptionsRepository
 import com.example.nifty50ops.repository.StockRepository
+import com.example.nifty50ops.special_features.MarketOverview.debugData
+import com.example.nifty50ops.special_features.MarketOverview.generateAggregatedMarketInsight
+import com.example.nifty50ops.special_features.MarketOverview.generateMarketReviewSummary
+import com.example.nifty50ops.special_features.StockOptionsAggregator
 import com.example.nifty50ops.utils.readJwtToken
 import kotlinx.coroutines.*
+import java.time.LocalTime
 import java.util.*
 
 class DataFetchService : Service() {
@@ -39,13 +44,6 @@ class DataFetchService : Service() {
         wakeLock.acquire()
         readJwtToken(this)
 
-//        val db1 = StockDatabase.getDatabase(applicationContext)
-//        val stockRepo = StockRepository(db1.stockDao())
-//        val db2 = OptionsDatabase.getDatabase(applicationContext)
-//        val optionRepo = OptionsRepository(db2.optionsDao())
-//        val db3 = MarketDatabase.getDatabase(applicationContext)
-//        val marketRepo = MarketRepository(db3.marketDao())
-
         val db = MarketDatabase.getDatabase(applicationContext)
         val optionRepo = OptionsRepository(db.marketDao())
         val stockRepo = StockRepository(db.marketDao())
@@ -54,6 +52,7 @@ class DataFetchService : Service() {
         optionsController = OptionsController(optionRepo)
         stockController = StockController(stockRepo)
         marketController = MarketController(marketRepo)
+
 
         startForegroundService()
         startFetchingLoop()
@@ -109,7 +108,27 @@ class DataFetchService : Service() {
                         optionsController.fetchOptionsData(applicationContext)
                         marketController.saveSummaries(applicationContext)
                         marketController.saveSentimentSummary(applicationContext)
-                        marketController.generateMarketReviewSummary(applicationContext)
+
+
+                        // 1Min summary always
+                        generateMarketReviewSummary(applicationContext)
+                        debugData(applicationContext)
+
+                        // Aggregated only at right intervals
+                        val aggregator = StockOptionsAggregator()
+                        val repository = MarketRepository(MarketDatabase.getDatabase(applicationContext).marketDao())
+                        val currentMinute = LocalTime.now().minute
+
+                        if (currentMinute % 5 == 0) {
+                            generateAggregatedMarketInsight(applicationContext, aggregator, repository, 5)
+                        }
+                        if (currentMinute % 10 == 0) {
+                            generateAggregatedMarketInsight(applicationContext, aggregator, repository, 10)
+                        }
+                        if (currentMinute % 15 == 0) {
+                            generateAggregatedMarketInsight(applicationContext, aggregator, repository, 15)
+                        }
+
                     } catch (e: Exception) {
                         println("❌ Error fetching: ${e.localizedMessage}")
                     }
@@ -128,7 +147,7 @@ class DataFetchService : Service() {
         val minute = cal.get(Calendar.MINUTE)
 
         val isWeekday = dayOfWeek in Calendar.MONDAY..Calendar.FRIDAY
-        val isMarketHours = (hour > 9 || (hour == 9 && minute >= 15)) && (hour < 15 || (hour == 15 && minute <= 30))
+        val isMarketHours = (hour > 9 || (hour == 9 && minute >= 17)) && (hour < 15 || (hour == 15 && minute <= 15))
 
         return isWeekday && isMarketHours
 //        return true

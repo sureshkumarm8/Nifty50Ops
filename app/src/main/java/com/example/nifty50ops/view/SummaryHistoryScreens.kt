@@ -32,7 +32,7 @@ import com.example.nifty50ops.model.OptionsSummaryEntity
 import com.example.nifty50ops.model.SentimentSummaryEntity
 import com.example.nifty50ops.model.StockSummaryEntity
 import com.example.nifty50ops.repository.MarketRepository
-import com.example.nifty50ops.utils.StockOptionsAggregator
+import com.example.nifty50ops.special_features.StockOptionsAggregator
 import com.example.nifty50ops.utils.convertToCrString
 import com.example.nifty50ops.utils.convertToLacsString
 import com.example.nifty50ops.utils.oneDecimalDisplay
@@ -201,9 +201,9 @@ fun StockSummaryHistoryScreen(context: Context, intervalTM: String) {
     var stockList by remember { mutableStateOf<List<StockSummaryEntity>>(emptyList()) }
     val listState = rememberLazyListState()
 
-    // Helper: Convert "1min", "5min" string to int
+    // Helper: Convert "1Min", "5Min" string to int
     fun parseInterval(intervalStr: String): Int {
-        return intervalStr.removeSuffix("min").toIntOrNull() ?: 1
+        return intervalStr.removeSuffix("Min").toIntOrNull() ?: 1
     }
 
     LaunchedEffect(intervalTM) {
@@ -326,9 +326,9 @@ fun OptionsSummaryHistoryScreen(context: Context, intervalTM: String) {
     var optionsList by remember { mutableStateOf<List<OptionsSummaryEntity>>(emptyList()) }
     val listState = rememberLazyListState()
 
-    // Helper: Convert "1min", "5min" string to int
+    // Helper: Convert "1Min", "5Min" string to int
     fun parseInterval(intervalStr: String): Int {
-        return intervalStr.removeSuffix("min").toIntOrNull() ?: 1
+        return intervalStr.removeSuffix("Min").toIntOrNull() ?: 1
     }
 
     LaunchedEffect(intervalTM) {

@@ -5,6 +5,7 @@ import com.example.nifty50ops.model.OptionsEntity
 import com.example.nifty50ops.network.ApiService
 import com.example.nifty50ops.repository.OptionsRepository
 import com.example.nifty50ops.utils.readSecurityIdToSymbolMap
+import com.example.nifty50ops.utils.roundTo2DecimalPlaces
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
@@ -126,12 +127,12 @@ class OptionsController(private val optionRepository: OptionsRepository) {
                 buyQty = buyQty,
                 sellQty = sellQty,
                 volTraded = volTraded,
-                buyDiffPercent = buyDiffPercent,
-                sellDiffPercent = sellDiffPercent,
-                lastMinSentiment = lastMinSentiment,
-                buyStrengthPercent = buyStrengthPercent,
-                sellStrengthPercent = sellStrengthPercent,
-                overAllSentiment = overAllSentiment,
+                buyDiffPercent = buyDiffPercent.roundTo2DecimalPlaces(),
+                sellDiffPercent = sellDiffPercent.roundTo2DecimalPlaces(),
+                lastMinSentiment = lastMinSentiment.roundTo2DecimalPlaces(),
+                buyStrengthPercent = buyStrengthPercent.roundTo2DecimalPlaces(),
+                sellStrengthPercent = sellStrengthPercent.roundTo2DecimalPlaces(),
+                overAllSentiment = overAllSentiment.roundTo2DecimalPlaces(),
                 oiQty = oiQty,
                 oiChange = oiChange,
                 lastMinOIChange = lastMinOIChange,

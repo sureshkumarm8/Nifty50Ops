@@ -69,7 +69,7 @@ import com.example.nifty50ops.utils.readJwtToken
 import com.example.nifty50ops.utils.readSecurityIdToSymbolMap
 import com.example.nifty50ops.view.AboutScreen
 import com.example.nifty50ops.view.MainScreen
-import com.example.nifty50ops.view.MarketReviewScreen
+import com.example.nifty50ops.view.MarketOverviewScreen
 import com.example.nifty50ops.view.OISummaryHistoryScreen
 import com.example.nifty50ops.view.OptionHistoryScreen
 import com.example.nifty50ops.view.OptionsScreen
@@ -115,7 +115,7 @@ class MainActivity : ComponentActivity() {
             DrawerItem("main", "🏠 Home"),
             DrawerItem("stocks", "📈 Stocks"),
             DrawerItem("options", "📊 Options"),
-            DrawerItem("market_review", "⚙️ Market Review"),
+            DrawerItem("market_overview", "⚙️ Market Overview"),
             DrawerItem("csv_export", "💾 Export CSV"),
             DrawerItem("about", "ℹ️ About")
         )
@@ -218,7 +218,7 @@ class MainActivity : ComponentActivity() {
             currentRoute == "stocks" -> "📈 Nifty 50 Stock Updates"
             currentRoute == "options" -> "📊 Weekly Nifty 50 Options"
             currentRoute == "csv_export" -> "💾 Export CSV"
-            currentRoute == "market_review" -> "⚙️ Market Review"
+            currentRoute == "market_overview" -> "⚙️ Market Overview"
             currentRoute == "about" -> "ℹ️ About"
             currentRoute == "sentiment_summary_history" -> "📈 Sentiment Summary History"
             currentRoute == "stock_summary_history" -> "📈 Stock Summary History"
@@ -228,17 +228,19 @@ class MainActivity : ComponentActivity() {
         }
 
         // Individual interval states
-        val stockInterval = remember { mutableStateOf("1min") }
-        val optionsInterval = remember { mutableStateOf("1min") }
-        val oiInterval = remember { mutableStateOf("1min") }
-        val sentimentInterval = remember { mutableStateOf("1min") }
+        val stockInterval = remember { mutableStateOf("1Min") }
+        val optionsInterval = remember { mutableStateOf("1Min") }
+        val oiInterval = remember { mutableStateOf("1Min") }
+        val sentimentInterval = remember { mutableStateOf("1Min") }
+        val marketOverviewInterval = remember { mutableStateOf("1Min") }
 
         // Map current route to corresponding interval setter
         val intervalSelectionMap = mapOf(
             "stock_summary_history" to { value: String -> stockInterval.value = value },
             "options_summary_history" to { value: String -> optionsInterval.value = value },
             "oi_summary_history" to { value: String -> oiInterval.value = value },
-            "sentiment_summary_history" to { value: String -> sentimentInterval.value = value }
+            "sentiment_summary_history" to { value: String -> sentimentInterval.value = value },
+            "market_overview" to { value: String -> marketOverviewInterval.value = value }
         )
 
         ModalNavigationDrawer(
@@ -287,7 +289,8 @@ class MainActivity : ComponentActivity() {
                                 currentRoute == "stock_summary_history" ||
                                 currentRoute == "options_summary_history" ||
                                 currentRoute == "oi_summary_history" ||
-                                currentRoute == "sentiment_summary_history"
+                                currentRoute == "sentiment_summary_history"||
+                                currentRoute == "market_overview"
                             ) {
                                 IconButton(onClick = { menuExpanded = true }) {
                                     Icon(
@@ -301,7 +304,7 @@ class MainActivity : ComponentActivity() {
                                     expanded = menuExpanded,
                                     onDismissRequest = { menuExpanded = false }
                                 ) {
-                                    listOf("1min", "5min", "10min", "15min").forEach { label ->
+                                    listOf("1Min", "5Min", "10Min", "15Min").forEach { label ->
                                         DropdownMenuItem(
                                             text = { Text(label) },
                                             onClick = {
@@ -330,7 +333,7 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("stocks") { StockScreen(context, navController) }
                         composable("options") { OptionsScreen(context, navController) }
-                        composable("market_review") { MarketReviewScreen(context, navController) }
+                        composable("market_overview") { MarketOverviewScreen(context, marketOverviewInterval.value ) }
                         composable("csv_export") { ExportDataScreen(context) }
                         composable("about") { AboutScreen(context) }
 

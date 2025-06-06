@@ -53,3 +53,24 @@ data class SentimentSummaryEntity(
     val oi1MinChange : Double,
     val oiOverAllChange : Double
 )
+
+@Entity(tableName = "market_insights_table")
+data class MarketInsightEntity(
+    @PrimaryKey val timestamp: String,            // when this insight was generated
+    val name: String = "NIFTY50",      // index name
+    val ltp: Double,                   // latest LTP
+    val pointsChanged: Int,
+    val intervalMinutes : String,
+
+    // Summary Text
+    val stockSummary: String,
+    val optionSummary: String,
+    val sentimentSummary: String,
+
+    // Top 5 Fluctuations (as text for now — simple)
+    val top5StockFluctuations: String,
+    val top5OptionFluctuations: String,
+
+    // Trading Hints
+    val tradingHints: String
+)

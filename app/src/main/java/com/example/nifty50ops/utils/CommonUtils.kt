@@ -1,5 +1,6 @@
 package com.example.nifty50ops.utils
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Environment
 import android.util.Log
@@ -130,3 +131,7 @@ fun setColorForSellStr(value: Double, prevValue: Double): Color {
     return setColor
 }
 
+@SuppressLint("DefaultLocale")
+fun Double.roundTo2DecimalPlaces(): Double {
+    return String.format("%.2f", this).toDouble()
+}
