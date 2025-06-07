@@ -13,10 +13,10 @@ import com.example.nifty50ops.controller.OptionsController
 import com.example.nifty50ops.controller.StockController
 import com.example.nifty50ops.controller.MarketController
 import com.example.nifty50ops.database.MarketDatabase
+import com.example.nifty50ops.network.buildPromptForGemini
 import com.example.nifty50ops.repository.MarketRepository
 import com.example.nifty50ops.repository.OptionsRepository
 import com.example.nifty50ops.repository.StockRepository
-import com.example.nifty50ops.special_features.MarketOverview.buildPromptForGemini
 import com.example.nifty50ops.special_features.MarketOverview.generateAggregatedMarketInsight
 import com.example.nifty50ops.special_features.MarketOverview.generateMarketReviewSummary
 import com.example.nifty50ops.special_features.MarketOverview.updateGenAIInsights
