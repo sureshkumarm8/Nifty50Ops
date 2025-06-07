@@ -44,7 +44,7 @@ fun MainScreen(context: Context, navController: NavController) {
             Spacer(modifier = Modifier.height(12.dp))
             OptionsSummary(context, navController)
             Spacer(modifier = Modifier.height(12.dp))
-            OISummary(context, navController)
+            GenAIInsightSummary(context, navController)
             Spacer(modifier = Modifier.height(20.dp))
             SnapshotSection("📦 Stocks Snapshot") { StockSnapshot(context) }
             Spacer(modifier = Modifier.height(16.dp))

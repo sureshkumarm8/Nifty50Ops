@@ -114,6 +114,9 @@ interface MarketDao {
     @Query("SELECT * FROM market_insights_table ORDER BY timestamp DESC")
     fun getAllMarketInsights(): Flow<List<MarketInsightEntity>>
 
+    @Query("SELECT * FROM market_insights_table ORDER BY timestamp DESC LIMIT 1")
+    fun getLatestMarketInsight(): Flow<MarketInsightEntity?>
+
     @Query("SELECT * FROM market_insights_table WHERE intervalMinutes = :intervalMinutes ORDER BY timestamp ASC")
     fun getMarketInsightsByInterval(intervalMinutes: String): Flow<List<MarketInsightEntity>>
 

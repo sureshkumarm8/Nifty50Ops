@@ -28,6 +28,7 @@ class MarketRepository(private val marketDao: MarketDao) {
 
     suspend fun insertMarketInsights(insight: MarketInsightEntity) = marketDao.insertMarketInsight(insight)
     fun getAllMarketInsights(): Flow<List<MarketInsightEntity>> = marketDao.getAllMarketInsights()
+    fun getLatestMarketInsight(): Flow<MarketInsightEntity?> = marketDao.getLatestMarketInsight()
     fun getMarketInsightsByInterval(intervalMinutes: String) = marketDao.getMarketInsightsByInterval(intervalMinutes)
 
 }

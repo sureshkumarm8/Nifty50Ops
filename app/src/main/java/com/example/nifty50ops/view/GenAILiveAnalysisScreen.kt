@@ -17,7 +17,6 @@ import com.example.nifty50ops.repository.MarketRepository
 
 @Composable
 fun MarketLiveGenAIAnalysisScreen(context: Context, intervalTM: String) {
-    val context = LocalContext.current
     val dao = remember { MarketDatabase.getDatabase(context).marketDao() }
     val repository = remember { MarketRepository(dao) }
 
@@ -29,7 +28,7 @@ fun MarketLiveGenAIAnalysisScreen(context: Context, intervalTM: String) {
             insightsList = list.sortedByDescending { it.timestamp }
         }
     }
-
+    println("GenAI insightsList: " + insightsList.size)
     Column(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             state = listState,

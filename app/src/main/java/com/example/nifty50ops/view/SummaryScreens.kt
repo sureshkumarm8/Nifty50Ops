@@ -33,10 +33,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.nifty50ops.database.MarketDatabase
+import com.example.nifty50ops.model.MarketInsightEntity
 import com.example.nifty50ops.model.MarketsEntity
 import com.example.nifty50ops.model.OptionsSummaryEntity
 import com.example.nifty50ops.model.SentimentSummaryEntity
@@ -101,7 +103,6 @@ fun SentimentSummary(context: Context, navController: NavController) {
         )
     }
 }
-
 
 @Composable
 fun StockSummary(context: Context, navController: NavController) {
@@ -192,43 +193,56 @@ fun OptionsSummary(context: Context, navController: NavController) {
 }
 
 @Composable
-fun OISummary(context: Context, navController: NavController) {
+fun GenAIInsightSummary(context: Context, navController: NavController) {
     val dao = MarketDatabase.getDatabase(context).marketDao()
     val repository = MarketRepository(dao)
 
-//    var optionsSummary by remember { mutableStateOf<OptionsSummaryEntity?>(null) }
-    var optionsSummary by remember { mutableStateOf<List<OptionsSummaryEntity>>(emptyList()) }
+    var latestInsight by remember { mutableStateOf<MarketInsightEntity?>(null) }
 
     LaunchedEffect(Unit) {
-        repository.getAllOptionsSummary().collect { summary ->
-            optionsSummary = summary
+        repository.getLatestMarketInsight().collect { insight ->
+            latestInsight = insight
         }
     }
 
-    if (optionsSummary.isNotEmpty()) {
-        val curr = optionsSummary.last()
-        val prev = optionsSummary.getOrNull(optionsSummary.lastIndex - 1)
+    latestInsight?.let { insight ->
+        // Extract all sections
+        val momentum = extractSection(insight.gen_ai_insights ?: "", "Immediate Momentum")
+        val volatility = extractSection(insight.gen_ai_insights ?: "", "Volatility & Unusual Activity")
+        val reversal = extractSection(insight.gen_ai_insights ?: "", "Reversal / Breakout Alerts")
+        val entryTriggers = extractSection(insight.gen_ai_insights ?: "", "Entry Triggers")
+        val exitCues = extractSection(insight.gen_ai_insights ?: "", "Exit Cues & Warnings")
+        val recommendedSide = extractSection(insight.gen_ai_insights ?: "", "Recommended Side")
 
-        SummaryCard(
-            title = "📉 OI Summary",
-            summaryItems = listOf(
-                "Time" to curr.lastUpdated,
-                "OI" to convertToCrString(curr.oiQty.toInt()),
-                "OI Change" to convertToLacsString(curr.oiChange.toInt()),
-                "LastMin" to "%.2f".format(curr.lastMinOIChange),
-                "OverAll" to "%.2f".format(curr.overAllOIChange)
-            ),
-            onClick = {
-                navController.navigate("oi_summary_history")
-            },
-            colorOverrides = listOf(
-                Color.Black,
-                setColorForBuyStr(curr.oiQty.toDouble(), prev?.oiQty?.toDouble() ?: curr.oiQty.toDouble()),
-                setColorForBuyStr(curr.oiChange, prev?.oiChange ?: curr.oiChange),
-                setColorForBuyStr(curr.lastMinOIChange, prev?.lastMinOIChange ?: curr.lastMinOIChange),
-                setColorForBuyStr(curr.overAllOIChange, prev?.overAllOIChange ?: curr.overAllOIChange)
-            )
-        )
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { navController.navigate("market_live_gen_ai_analysis") }
+                .padding(vertical = 4.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFD1C4E9)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text = "✨ GenAI Insight - ${insight.timestamp}",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF673AB7),
+                    modifier = Modifier.padding(bottom = 6.dp)
+                )
+
+                LabelValueRow("Momentum", momentum.ifBlank { "N/A" })
+                LabelValueRow("Volatility", volatility.ifBlank { "N/A" })
+                LabelValueRow("Reversal", reversal.ifBlank { "N/A" })
+                LabelValueRow("Entry", entryTriggers.ifBlank { "N/A" })
+                LabelValueRow("Exit", exitCues.ifBlank { "N/A" })
+                LabelValueRowWithColor("Side", recommendedSide.ifBlank { "N/A" })
+            }
+        }
     }
 }
 
@@ -284,107 +298,82 @@ fun SummaryCard(
     }
 }
 
+fun extractSection(text: String, sectionTitle: String): String {
+    val pattern = """
+        (?m)^#\s*$sectionTitle\s*[\r\n]+(.*?)(?=^#\s|\z)
+    """.trimIndent()
+    val regex = Regex(pattern, RegexOption.DOT_MATCHES_ALL)
+    val match = regex.find(text)
+    return match?.groups?.get(1)?.value
+        ?.trim()
+        ?.replace(Regex("""\s+"""), " ") // optional: collapse extra spaces
+        ?: ""
+}
 
 @Composable
-fun SentimentSummaryHistoryScreen_3Tables(context: Context) {
-    val stockDao = MarketDatabase.getDatabase(context).marketDao()
-    val repository = MarketRepository(stockDao)
-
-    var stockList by remember { mutableStateOf<List<StockSummaryEntity>>(emptyList()) }
-    var optionList by remember { mutableStateOf<List<OptionsSummaryEntity>>(emptyList()) }
-    var marketList by remember { mutableStateOf<List<MarketsEntity>>(emptyList()) }
-
-    val listState = rememberLazyListState()
-    val horizontalScrollState = rememberScrollState()
-
-    // Collect data
-    LaunchedEffect(true) {
-        launch {
-            repository.getAllStockSummary().collectLatest { newList ->
-                stockList = newList
-            }
-        }
-        launch {
-            repository.getAllOptionsSummary().collectLatest { newList ->
-                optionList = newList
-            }
-        }
-        launch {
-            repository.getAllData().collectLatest { newList ->
-                marketList = newList.reversed()
-            }
-        }
-    }
-
-    // Scroll to bottom after LazyColumn is fully composed and new item is added
-    LaunchedEffect(marketList.size) {
-        snapshotFlow { listState.layoutInfo.totalItemsCount }
-            .filter { it > 0 }
-            .firstOrNull()
-        if (marketList.isNotEmpty()) {
-            listState.animateScrollToItem(marketList.lastIndex)
-        }
-    }
-
-    // Combine all 3 lists
-    val combinedList = remember(stockList, optionList, marketList) {
-        stockList
-            .zip(optionList) { stock, option -> stock to option }
-            .zip(marketList) { (stock, option), market -> Triple(stock, option, market) }
-    }
-
-    Box(
+fun LabelValueRow(label: String, value: String) {
+    Row(
         modifier = Modifier
-            .fillMaxSize()
-            .horizontalScroll(horizontalScrollState)
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        verticalAlignment = Alignment.Top // align texts at top
     ) {
-        Column(
+        Text(
+            text = "$label:",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color.DarkGray,
             modifier = Modifier
-                .width(620.dp)
-                .padding(horizontal = 2.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TableHeaderCell("Time")
-                TableHeaderCell("LTP")
-                TableHeaderCell("LTP Change")
-                TableHeaderCell("Stock 1Min")
-                TableHeaderCell("Stock OverAll")
-                TableHeaderCell("Options 1Min")
-                TableHeaderCell("Options OverAll")
-                TableHeaderCell("OI    1Min")
-                TableHeaderCell("OI Change")
-            }
-
-            Divider(color = Color.Gray, thickness = 1.dp)
-
-            LazyColumn(state = listState) {
-                items(combinedList) { (stock, option, market) ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        TableCell(market.timestamp.take(5))
-                        TableCell(twoDecimalDisplay(market.ltp).take(5))
-                        TableCell(twoDecimalDisplay(market.pointsChanged.toDouble()))
-                        TableCell(twoDecimalDisplay(stock.lastMinSentiment))
-                        TableCell(twoDecimalDisplay(stock.overAllSentiment))
-                        TableCell(twoDecimalDisplay(option.lastMinSentiment))
-                        TableCell(twoDecimalDisplay(option.overAllSentiment))
-                        TableCell(twoDecimalDisplay(option.lastMinOIChange))
-                        TableCell(twoDecimalDisplay(option.overAllOIChange))
-                    }
-                }
-            }
-        }
+                .weight(0.3f)   // about 30% width for label
+                .padding(end = 4.dp)
+        )
+        Text(
+            text = value,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Normal,
+            color = Color.Black,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(0.7f)  // about 70% width for value, allows wrapping
+        )
     }
 }
+
+@Composable
+fun LabelValueRowWithColor(label: String, value: String) {
+    val valueColor = when {
+        value.contains("Long", ignoreCase = true) -> Color(0xFF388E3C)  // Green
+        value.contains("Short", ignoreCase = true) -> Color(0xFFD32F2F)  // Red
+        value.contains("Wait", ignoreCase = true) -> Color(0xFF757575)   // Grey
+        else -> Color.Black
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Text(
+            text = "$label:",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color.DarkGray,
+            modifier = Modifier
+                .weight(0.3f)
+                .padding(end = 4.dp)
+        )
+        Text(
+            text = value,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = valueColor,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(0.7f)
+        )
+    }
+}
+
 
 
