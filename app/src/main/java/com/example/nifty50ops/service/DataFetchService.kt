@@ -168,8 +168,8 @@ class DataFetchService : Service() {
         val isWeekday = dayOfWeek in Calendar.MONDAY..Calendar.FRIDAY
         val isMarketHours = (hour > 9 || (hour == 9 && minute >= 17)) && (hour < 15 || (hour == 15 && minute <= 15))
 
-//        return isWeekday && isMarketHours
-        return true
+        return isWeekday && isMarketHours
+//        return true
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
