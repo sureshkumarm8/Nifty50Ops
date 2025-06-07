@@ -4,6 +4,8 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,6 +20,7 @@ import com.example.nifty50ops.repository.StockRepository
 import com.example.nifty50ops.utils.ExportHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun ExportDataScreen(context: Context = LocalContext.current) {
@@ -77,6 +80,16 @@ fun ExportDataScreen(context: Context = LocalContext.current) {
                 showToast(context, "All tables exported successfully.")
             }
         }
+
+        ExportActionButton("Copy All Exported Files to Downloads") {
+            scope.launch(Dispatchers.IO) {
+                ExportHelper.copyAllFilesToDownloads(context)
+                withContext(Dispatchers.Main) {
+                    showToast(context, "All files copied to Downloads.")
+                }
+            }
+        }
+
     }
 }
 
@@ -97,4 +110,5 @@ private fun showToast(context: Context, message: String) {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
 }
+
 

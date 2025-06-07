@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.example.nifty50ops.database.MarketDatabase
 import com.example.nifty50ops.model.MarketInsightEntity
+import com.example.nifty50ops.network.generateContent
 import com.example.nifty50ops.repository.MarketRepository
 import com.example.nifty50ops.repository.OptionsRepository
 import com.example.nifty50ops.repository.StockRepository
@@ -31,8 +32,9 @@ object MarketThresholds {
 }
 
 object MarketOverview {
-    suspend fun generateMarketReviewSummary(context: Context) {
-        withContext(Dispatchers.IO) {
+
+    suspend fun generateMarketReviewSummary(context: Context): MarketInsightEntity {
+        val insightsEntity = withContext(Dispatchers.IO) {
             val database = MarketDatabase.getDatabase(context)
             val dao = database.marketDao()
             val repository = MarketRepository(dao)
@@ -43,6 +45,8 @@ object MarketOverview {
             val stockList = stockRepository.getLastMinStocks().first()
             val optionList = optionRepository.getLastMinOptions().first()
             val sentiment = repository.getLastSentimentSummary().first()
+            val stockSummaryEntity = repository.getLatestStockSummary().first()
+            val optionsSummaryEntity = repository.getLatestOptionsSummary().first()
 
             // Top stock & option
             val topStock = stockList.maxByOrNull {
@@ -65,42 +69,45 @@ object MarketOverview {
                 )
             }.take(5)
 
-
-
-            // Stock Summary
+            // Stock Group Summary
             val stockSummary = """
-            📊 Stocks Summary
-            • Time: ${sentiment.first().lastUpdated}
-            • Top Stock: ${topStock?.name ?: "-"} | Buy: ${"%.1f".format(topStock?.buyDiffPercent ?: 0.0)}% | Sell: ${
+            📊 Stock Group Summary
+            • Time: ${stockSummaryEntity.lastUpdated}
+            • LTP: ${"%.1f".format(stockSummaryEntity.ltp)}
+            • Buy Avg: ${"%.1f".format(stockSummaryEntity.buyAvg)}% | Sell Avg: ${
                 "%.1f".format(
-                    topStock?.sellDiffPercent ?: 0.0
-                )
-            }
-            • Buy Str: ${"%.1f".format(topStock?.buyStrengthPercent ?: 0.0)}% | Sell Str: ${
-                "%.1f".format(
-                    topStock?.sellStrengthPercent ?: 0.0
+                    stockSummaryEntity.sellAvg
                 )
             }%
+            • Buy Strength: ${"%.1f".format(stockSummaryEntity.stockBuyStr)}% | Sell Strength: ${
+                "%.1f".format(
+                    stockSummaryEntity.stockSellStr
+                )
+            }%
+            • Overall Sentiment: ${"%.1f".format(stockSummaryEntity.overAllSentiment)}%
         """.trimIndent()
 
-            // Option Summary
+            // Option Group Summary
             val optionSummary = """
-            📉 Options Summary
-            • Top Option: ${topOption?.name ?: "-"} | Buy: ${"%.1f".format(topOption?.buyDiffPercent ?: 0.0)}% | Sell: ${
+            📉 Option Group Summary
+            • Time: ${optionsSummaryEntity.lastUpdated}
+            • LTP: ${"%.1f".format(optionsSummaryEntity.ltp)}
+            • Volume Traded: ${optionsSummaryEntity.volumeTraded}
+            • Buy Avg: ${"%.1f".format(optionsSummaryEntity.buyAvg)}% | Sell Avg: ${
                 "%.1f".format(
-                    topOption?.sellDiffPercent ?: 0.0
-                )
-            }
-            • Buy Str: ${"%.1f".format(topOption?.buyStrengthPercent ?: 0.0)}% | Sell Str: ${
-                "%.1f".format(
-                    topOption?.sellStrengthPercent ?: 0.0
+                    optionsSummaryEntity.sellAvg
                 )
             }%
-            • OI Chg: ${"%.1f".format(topOption?.overAllOIChange ?: 0.0)}% | Last Min OI: ${
+            • Buy Strength: ${"%.1f".format(optionsSummaryEntity.optionsBuyStr)}% | Sell Strength: ${
                 "%.1f".format(
-                    topOption?.lastMinOIChange ?: 0.0
+                    optionsSummaryEntity.optionsSellStr
                 )
             }%
+            • Overall Sentiment: ${"%.1f".format(optionsSummaryEntity.overAllSentiment)}%
+            • OI Qty: ${optionsSummaryEntity.oiQty}
+            • OI Change: ${"%.1f".format(optionsSummaryEntity.oiChange)}%
+            • 1Min OI Change: ${"%.1f".format(optionsSummaryEntity.lastMinOIChange)}%
+            • Overall OI Change: ${"%.1f".format(optionsSummaryEntity.overAllOIChange)}%
         """.trimIndent()
 
             // Helper function to get bullish/bearish/neutral label
@@ -111,27 +118,66 @@ object MarketOverview {
                     else -> "Neutral"
                 }
 
-        // Build sentiment summary with extra insights
+            // Build sentiment summary
             val sentimentSummary = buildString {
                 appendLine("🧠 Sentiment Summary")
                 appendLine("• Point Diff: ${sentiment.first().pointsChanged}")
-                appendLine("• Stock Overall: ${sentiment.first().stockOverAllChange.roundTo2DecimalPlaces()} (${getSentimentLabel(sentiment.first().stockOverAllChange)})")
-                appendLine("• Stock 1Min: ${sentiment.first().stock1MinChange.roundTo2DecimalPlaces()} (${getSentimentLabel(sentiment.first().stock1MinChange)})")
-                appendLine("• Option Overall: ${sentiment.first().optionOverAllChange.roundTo2DecimalPlaces()} (${getSentimentLabel(sentiment.first().optionOverAllChange)})")
-                appendLine("• Option 1Min: ${sentiment.first().option1MinChange.roundTo2DecimalPlaces()} (${getSentimentLabel(sentiment.first().option1MinChange)})")
-                appendLine("• OI Overall: ${sentiment.first().oiOverAllChange.roundTo2DecimalPlaces()} (${getSentimentLabel(sentiment.first().oiOverAllChange)})")
-                appendLine("• OI 1Min: ${sentiment.first().oi1MinChange.roundTo2DecimalPlaces()} (${getSentimentLabel(sentiment.first().oi1MinChange)})")
+                appendLine(
+                    "• Stock Overall: ${sentiment.first().stockOverAllChange.roundTo2DecimalPlaces()} (${
+                        getSentimentLabel(
+                            sentiment.first().stockOverAllChange
+                        )
+                    })"
+                )
+                appendLine(
+                    "• Stock 1Min: ${sentiment.first().stock1MinChange.roundTo2DecimalPlaces()} (${
+                        getSentimentLabel(
+                            sentiment.first().stock1MinChange
+                        )
+                    })"
+                )
+                appendLine(
+                    "• Option Overall: ${sentiment.first().optionOverAllChange.roundTo2DecimalPlaces()} (${
+                        getSentimentLabel(
+                            sentiment.first().optionOverAllChange
+                        )
+                    })"
+                )
+                appendLine(
+                    "• Option 1Min: ${sentiment.first().option1MinChange.roundTo2DecimalPlaces()} (${
+                        getSentimentLabel(
+                            sentiment.first().option1MinChange
+                        )
+                    })"
+                )
+                appendLine(
+                    "• OI Overall: ${sentiment.first().oiOverAllChange.roundTo2DecimalPlaces()} (${
+                        getSentimentLabel(
+                            sentiment.first().oiOverAllChange
+                        )
+                    })"
+                )
+                appendLine(
+                    "• OI 1Min: ${sentiment.first().oi1MinChange.roundTo2DecimalPlaces()} (${
+                        getSentimentLabel(
+                            sentiment.first().oi1MinChange
+                        )
+                    })"
+                )
 
-                // Combined momentum
-                val combinedMomentum = sentiment.first().stock1MinChange + sentiment.first().option1MinChange
-                appendLine("• Combined Momentum (1Min): ${"%.2f".format(combinedMomentum)} (${getSentimentLabel(combinedMomentum)})")
+                val combinedMomentum =
+                    sentiment.first().stock1MinChange + sentiment.first().option1MinChange
+                appendLine(
+                    "• Combined Momentum (1Min): ${"%.2f".format(combinedMomentum)} (${
+                        getSentimentLabel(
+                            combinedMomentum
+                        )
+                    })"
+                )
 
-                // Highlight strong momentum
                 if (kotlin.math.abs(combinedMomentum) > 2.0) {
                     appendLine("⚡ Strong momentum detected in last minute.")
                 }
-
-                // OI buildup or drop
                 if (sentiment.first().oi1MinChange > 1.0) {
                     appendLine("⚠️ Significant OI buildup in last minute.")
                 } else if (sentiment.first().oi1MinChange < -1.0) {
@@ -140,7 +186,6 @@ object MarketOverview {
 
                 appendLine("• Last Updated: ${sentiment.first().lastUpdated}")
             }
-
 
             // Top 5 Fluctuations text
             val top5StockFluctuations = top5Stocks.joinToString("\n") {
@@ -151,7 +196,7 @@ object MarketOverview {
                 "→ ${it.name}: Buy=${"%.1f".format(it.buyDiffPercent)}%, Sell=${"%.1f".format(it.sellDiffPercent)}%"
             }
 
-// Trading Hints — enhanced for intraday, threshold driven
+            // Trading Hints
             val tradingHints = buildString {
                 val stock1Min = sentiment.first().stock1MinChange
                 val option1Min = sentiment.first().option1MinChange
@@ -159,7 +204,6 @@ object MarketOverview {
                 val optionOverAll = sentiment.first().optionOverAllChange
                 val oi1Min = sentiment.first().oi1MinChange
 
-                // Basic momentum
                 if (stock1Min > MarketThresholds.bullishMomentumThreshold && option1Min > MarketThresholds.bullishMomentumThreshold) {
                     append("📈 Bullish momentum building.\n")
                 } else if (stock1Min < MarketThresholds.bearishMomentumThreshold && option1Min < MarketThresholds.bearishMomentumThreshold) {
@@ -168,19 +212,16 @@ object MarketOverview {
                     append("🔄 Mixed signals, trade cautiously.\n")
                 }
 
-                // High OI buildup
                 if (oi1Min > MarketThresholds.highOiBuildupThreshold) {
                     append("⚠️ High OI buildup — watch for breakout/reversal.\n")
                 }
 
-                // Buy/Sell dominance
                 if (stockOverAll > MarketThresholds.strongBuyDominanceThreshold && optionOverAll > MarketThresholds.strongBuyDominanceThreshold) {
                     append("🟢 Strong buying dominance across Stocks & Options — bias long.\n")
                 } else if (stockOverAll < MarketThresholds.strongSellDominanceThreshold && optionOverAll < MarketThresholds.strongSellDominanceThreshold) {
                     append("🔴 Strong selling dominance across Stocks & Options — bias short.\n")
                 }
 
-                // Reversal warning
                 if (stock1Min.sign != stockOverAll.sign) {
                     append("⚠️ Possible Stock reversal building — watch carefully.\n")
                 }
@@ -188,39 +229,16 @@ object MarketOverview {
                     append("⚠️ Possible Option reversal building — monitor for traps.\n")
                 }
 
-                // Consolidation breakout alert
                 if (abs(stock1Min) > MarketThresholds.breakoutMoveThreshold && abs(option1Min) > MarketThresholds.breakoutMoveThreshold) {
                     append("🚀 Sudden strong move detected — possible breakout underway.\n")
                 }
 
-                // OI + Price divergence alert
                 if (option1Min > MarketThresholds.oiDivergenceThreshold && oi1Min < MarketThresholds.oiDivergenceThreshold) {
                     append("⚠️ Option price rising but OI dropping — potential bull trap.\n")
                 } else if (option1Min < MarketThresholds.oiDivergenceThreshold && oi1Min < MarketThresholds.oiDivergenceThreshold) {
                     append("⚠️ Option price falling with falling OI — possible bear trap.\n")
                 }
             }
-
-
-            // Log full summary (optional)
-            val fullSummary = """
-            $stockSummary
-            
-            $optionSummary
-            
-            $sentimentSummary
-            
-            Top 5 Stocks:
-            $top5StockFluctuations
-            
-            Top 5 Options:
-            $top5OptionFluctuations
-            
-            Trading Hints:
-            $tradingHints
-        """.trimIndent()
-
-            println("Generated Market Insights:\n$fullSummary")
 
             // Insert MarketInsightEntity
             val insightsEntity = MarketInsightEntity(
@@ -237,7 +255,9 @@ object MarketOverview {
                 tradingHints = tradingHints
             )
             dao.insertMarketInsight(insightsEntity)
+            insightsEntity
         }
+        return insightsEntity
     }
 
     suspend fun generateAggregatedMarketInsight(
@@ -245,57 +265,146 @@ object MarketOverview {
         aggregator: StockOptionsAggregator,
         repository: MarketRepository,
         intervalInMin: Int
-    ) {
+    ): MarketInsightEntity {
+
         val dao = MarketDatabase.getDatabase(context).marketDao()
 
-        // Get grouped summaries
         val stockSummaries = aggregator.getStockSummaryForIntervals(intervalInMin, repository)
         val optionSummaries = aggregator.getOptionsSummaryForIntervals(intervalInMin, repository)
         val sentimentSummary = repository.getLastSentimentSummary().first()
 
-        // Get last group summary
-        val latestStockSummary = stockSummaries.lastOrNull() ?: return
-        val latestOptionSummary = optionSummaries.lastOrNull() ?: return
+        val latestStockSummary = stockSummaries.lastOrNull()
+            ?: throw IllegalStateException("No stock summary found for interval $intervalInMin")
 
-        val stockSummary = """
-        📊 Stocks Summary (${intervalInMin}Min)
-        • Time: ${latestStockSummary.lastUpdated}
-        • Sentiment: ${"%.1f".format(latestStockSummary.overAllSentiment)}
-        • Buy Str: ${"%.1f".format(latestStockSummary.stockBuyStr)}% | Sell Str: ${"%.1f".format(latestStockSummary.stockSellStr)}%
-    """.trimIndent()
+        val latestOptionSummary = optionSummaries.lastOrNull()
+            ?: throw IllegalStateException("No option summary found for interval $intervalInMin")
 
-        val optionSummary = """
-        📉 Options Summary (${intervalInMin}Min)
-        • Time: ${latestOptionSummary.lastUpdated}
-        • Sentiment: ${"%.1f".format(latestOptionSummary.overAllSentiment)}
-        • Buy Str: ${"%.1f".format(latestOptionSummary.optionsBuyStr)}% | Sell Str: ${"%.1f".format(latestOptionSummary.optionsSellStr)}%
-        • OI Chg: ${"%.1f".format(latestOptionSummary.overAllOIChange)}%
-    """.trimIndent()
+        // Top 5 Fluctuations
+        val stockRepo = StockRepository(dao)
+        val optionRepo = OptionsRepository(dao)
+        val stockList = aggregator.getStocksForIntervals(intervalInMin, stockRepo)
+        val optionList = aggregator.getOptionsForIntervals(intervalInMin, optionRepo)
 
-        val sentimentSummaryText = """
-        🧠 Sentiment Summary (${intervalInMin}Min)
-        • Point Diff: ${sentimentSummary.first().pointsChanged}
-        • Stock: ${sentimentSummary.first().stockOverAllChange}, 1Min: ${sentimentSummary.first().stock1MinChange}
-        • Option: ${sentimentSummary.first().optionOverAllChange}, 1Min: ${sentimentSummary.first().option1MinChange}
-        • OI: ${sentimentSummary.first().oiOverAllChange}, 1Min OI: ${sentimentSummary.first().oi1MinChange}
-    """.trimIndent()
+        val top5Stocks = stockList.sortedByDescending {
+            maxOf(abs(it.buyDiffPercent), abs(it.sellDiffPercent))
+        }.take(5)
 
+        val top5Options = optionList.sortedByDescending {
+            maxOf(
+                maxOf(abs(it.buyDiffPercent), abs(it.sellDiffPercent)),
+                abs(it.overAllOIChange)
+            )
+        }.take(5)
+
+        val top5StockFluctuations = top5Stocks.joinToString("\n") {
+            "→ ${it.name}: Buy=${"%.1f".format(it.buyDiffPercent)}%, Sell=${"%.1f".format(it.sellDiffPercent)}%"
+        }
+
+        val top5OptionFluctuations = top5Options.joinToString("\n") {
+            "→ ${it.name}: Buy=${"%.1f".format(it.buyDiffPercent)}%, Sell=${"%.1f".format(it.sellDiffPercent)}%"
+        }
+
+        // Helper
+        fun getSentimentLabel(value: Double): String = when {
+            value > 0.5 -> "Bullish"
+            value < -0.5 -> "Bearish"
+            else -> "Neutral"
+        }
+
+        // Build Sentiment Summary
+        val sentimentSummaryText = buildString {
+            appendLine("🧠 Sentiment Summary (${intervalInMin}Min)")
+            appendLine("• Point Diff: ${sentimentSummary.first().pointsChanged}")
+            appendLine(
+                "• Stock Overall: ${sentimentSummary.first().stockOverAllChange.roundTo2DecimalPlaces()} (${
+                    getSentimentLabel(sentimentSummary.first().stockOverAllChange)
+                })"
+            )
+            appendLine(
+                "• Stock 1Min: ${sentimentSummary.first().stock1MinChange.roundTo2DecimalPlaces()} (${
+                    getSentimentLabel(sentimentSummary.first().stock1MinChange)
+                })"
+            )
+            appendLine(
+                "• Option Overall: ${sentimentSummary.first().optionOverAllChange.roundTo2DecimalPlaces()} (${
+                    getSentimentLabel(sentimentSummary.first().optionOverAllChange)
+                })"
+            )
+            appendLine(
+                "• Option 1Min: ${sentimentSummary.first().option1MinChange.roundTo2DecimalPlaces()} (${
+                    getSentimentLabel(sentimentSummary.first().option1MinChange)
+                })"
+            )
+            appendLine(
+                "• OI Overall: ${sentimentSummary.first().oiOverAllChange.roundTo2DecimalPlaces()} (${
+                    getSentimentLabel(sentimentSummary.first().oiOverAllChange)
+                })"
+            )
+            appendLine(
+                "• OI 1Min: ${sentimentSummary.first().oi1MinChange.roundTo2DecimalPlaces()} (${
+                    getSentimentLabel(sentimentSummary.first().oi1MinChange)
+                })"
+            )
+            appendLine("• Last Updated: ${sentimentSummary.first().lastUpdated}")
+        }
+
+        // Trading Hints
         val tradingHints = buildString {
-            if (sentimentSummary.first().stock1MinChange > 0 && sentimentSummary.first().option1MinChange > 0) {
-                append("📈 Bullish momentum building.\n")
-            } else if (sentimentSummary.first().stock1MinChange < 0 && sentimentSummary.first().option1MinChange < 0) {
-                append("📉 Bearish momentum seen.\n")
+            val stockOverAll = sentimentSummary.first().stockOverAllChange
+            val optionOverAll = sentimentSummary.first().optionOverAllChange
+            val oiOverAll = sentimentSummary.first().oiOverAllChange
+
+            if (stockOverAll > MarketThresholds.strongBuyDominanceThreshold && optionOverAll > MarketThresholds.strongBuyDominanceThreshold) {
+                append("🟢 Strong buying dominance across Stocks & Options — bias long.\n")
+            } else if (stockOverAll < MarketThresholds.strongSellDominanceThreshold && optionOverAll < MarketThresholds.strongSellDominanceThreshold) {
+                append("🔴 Strong selling dominance across Stocks & Options — bias short.\n")
             } else {
                 append("🔄 Mixed signals, trade cautiously.\n")
             }
 
-            if (sentimentSummary.first().oi1MinChange > 1.0) {
-                append("⚠️ High OI buildup — watch for breakout/reversal.")
+            if (oiOverAll > MarketThresholds.highOiBuildupThreshold) {
+                append("⚠️ High OI buildup — watch for breakout/reversal.\n")
+            } else if (oiOverAll < -MarketThresholds.highOiBuildupThreshold) {
+                append("⚠️ Significant OI drop — watch carefully.\n")
             }
         }
 
-        val insightsEntity = MarketInsightEntity(
-            timestamp = latestStockSummary.lastUpdated,
+        // Stock Group Summary
+        val stockSummary = """
+    📊 Stocks Summary (${intervalInMin}Min)
+    • Time: ${latestStockSummary.lastUpdated}
+    • LTP: ${sentimentSummary.first().ltp}
+    • Buy Avg: ${"%.1f".format(latestStockSummary.buyAvg)}% | Sell Avg: ${
+            "%.1f".format(latestStockSummary.sellAvg)
+        }%
+    • Buy Strength: ${"%.1f".format(latestStockSummary.stockBuyStr)}% | Sell Strength: ${
+            "%.1f".format(latestStockSummary.stockSellStr)
+        }%
+    • Overall Sentiment: ${"%.1f".format(latestStockSummary.overAllSentiment)}
+    """.trimIndent()
+
+        // Option Group Summary
+        val optionSummary = """
+    📉 Options Summary (${intervalInMin}Min)
+    • Time: ${latestOptionSummary.lastUpdated}
+    • LTP: ${sentimentSummary.first().ltp}
+    • Volume Traded: ${latestOptionSummary.volumeTraded}
+    • Buy Avg: ${"%.1f".format(latestOptionSummary.buyAvg)}% | Sell Avg: ${
+            "%.1f".format(latestOptionSummary.sellAvg)
+        }%
+    • Buy Strength: ${"%.1f".format(latestOptionSummary.optionsBuyStr)}% | Sell Strength: ${
+            "%.1f".format(latestOptionSummary.optionsSellStr)
+        }%
+    • Overall Sentiment: ${"%.1f".format(latestOptionSummary.overAllSentiment)}
+    • OI Qty: ${latestOptionSummary.oiQty}
+    • OI Change: ${"%.1f".format(latestOptionSummary.oiChange)}%
+    • 1Min OI Change: ${"%.1f".format(latestOptionSummary.lastMinOIChange)}%
+    • Overall OI Change: ${"%.1f".format(latestOptionSummary.overAllOIChange)}%
+    """.trimIndent()
+
+        // Insert MarketInsightEntity
+        val marketInsight = MarketInsightEntity(
+            timestamp = sentimentSummary.first().lastUpdated,
             name = "NIFTY50",
             ltp = sentimentSummary.first().ltp,
             pointsChanged = sentimentSummary.first().pointsChanged,
@@ -303,23 +412,96 @@ object MarketOverview {
             stockSummary = stockSummary,
             optionSummary = optionSummary,
             sentimentSummary = sentimentSummaryText,
-            top5StockFluctuations = "", // Optional — if needed, you can generate top5 again using same grouping logic
-            top5OptionFluctuations = "", // Optional
+            top5StockFluctuations = top5StockFluctuations,
+            top5OptionFluctuations = top5OptionFluctuations,
             tradingHints = tradingHints
         )
 
-        dao.insertMarketInsight(insightsEntity)
-
-        println("✅ Inserted MarketInsight for ${intervalInMin}Min")
+        dao.insertMarketInsight(marketInsight)
+        return marketInsight
     }
 
-    suspend fun debugData(context: Context) {
-        val dao = MarketDatabase.getDatabase(context).marketDao()
-        val repository = MarketRepository(dao)
 
-        repository.getMarketInsightsByInterval("10Min").collect { list ->
-            println("marketInsightsByInterval update: $list")
+    // Separate public method to update Gemini Insights
+    suspend fun updateGenAIInsights(context: Context, timestamp: String, prompt: String) {
+        val database = MarketDatabase.getDatabase(context)
+        val dao = database.marketDao()
+
+        try {
+            val genAIResult = generateContent(prompt)
+            dao.updateGenAIInsights(timestamp, genAIResult)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            dao.updateGenAIInsights(timestamp, "⚠️ AI generation failed: ${e.message}")
         }
     }
 
+    fun buildPromptForGemini(insight: MarketInsightEntity): String {
+        return """
+        You are an expert intraday scalper and market analyst focusing on NIFTY50 options.
+
+The trader:
+- Waits for the right entry within the next 5-10 minutes.
+- Exits quickly to capture fast momentum moves.
+- Is NOT looking for positional or long-term analysis — only immediate actionable insights.
+
+Based on the current market snapshot below, provide a **concise, structured scalping analysis**.
+
+⛔ Do not add extra explanation or lengthy market background.
+✅ Focus only on **fast actionable signals** and **entry/exit hints** suitable for scalping within next 5-10 minutes.
+
+Format the response in the following structure:
+
+# Immediate Momentum
+Direction (Up / Down / Sideways) with 1-line reasoning.
+
+# Volatility & Unusual Activity
+Mention any volatility spikes or sudden moves in stocks or options.
+
+# Reversal / Breakout Alerts
+Mention any sharp reversal signals or breakout levels to watch.
+
+# Entry Triggers
+List key price levels, option strikes, or signals to look for potential entry.
+
+# Exit Cues & Warnings
+Mention any quick exit signals or signs to avoid losses.
+
+# Recommended Side
+Recommend (Long / Short / Wait), with 1-line justification.
+
+
+---
+
+## Current Market Snapshot:
+• Timestamp: ${insight.timestamp}
+• Latest Price (LTP): ${insight.ltp}
+• Points Changed: ${insight.pointsChanged}
+
+--- Stock Summary ---
+${insight.stockSummary}
+
+--- Option Summary ---
+${insight.optionSummary}
+
+--- Sentiment Summary ---
+${insight.sentimentSummary}
+
+--- Top 5 Stock Fluctuations ---
+${insight.top5StockFluctuations}
+
+--- Top 5 Option Fluctuations ---
+${insight.top5OptionFluctuations}
+
+--- Trading Hints from App ---
+${insight.tradingHints}
+
+---
+
+Please provide response strictly in the **structured format** mentioned above, suitable for a scalper deciding trades within next 5-10 minutes.
+""".trimIndent()
+    }
+
+
 }
+

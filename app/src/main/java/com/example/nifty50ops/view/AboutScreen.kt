@@ -33,7 +33,7 @@ fun AboutScreen(context: Context) {
         ) {
             Text(
                 text = "ℹ️ About This App",
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(16.dp))

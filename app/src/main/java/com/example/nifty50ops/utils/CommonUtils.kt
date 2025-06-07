@@ -5,10 +5,8 @@ import android.content.Context
 import android.os.Environment
 import android.util.Log
 import androidx.compose.ui.graphics.Color
-import com.example.nifty50ops.network.ApiService
+import com.example.nifty50ops.network.PayTMMoneyApiService
 import java.io.File
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 
 
 fun readSecurityIdToSymbolMap(context: Context): Map<Int, String> {
@@ -50,8 +48,8 @@ fun readJwtToken(context: Context) {
     val lastLine = lines.lastOrNull()
 
     if (!lastLine.isNullOrBlank()) {
-        ApiService.jwtToken = lastLine.trim()
-        Log.d("JWT", "JWT Token assigned: ${ApiService.jwtToken?.take(10)}...")
+        PayTMMoneyApiService.jwtToken = lastLine.trim()
+        Log.d("JWT", "JWT Token assigned: ${PayTMMoneyApiService.jwtToken?.take(10)}...")
     }
 }
 

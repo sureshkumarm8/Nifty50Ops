@@ -2,7 +2,7 @@ package com.example.nifty50ops.controller
 
 import android.content.Context
 import com.example.nifty50ops.model.StockEntity
-import com.example.nifty50ops.network.ApiService
+import com.example.nifty50ops.network.PayTMMoneyApiService
 import com.example.nifty50ops.repository.StockRepository
 import com.example.nifty50ops.utils.roundTo2DecimalPlaces
 import kotlinx.coroutines.Dispatchers
@@ -18,7 +18,7 @@ class StockController(private val stockRepository: StockRepository) {
 
     suspend fun fetchStockData(context: Context) {
         val prefs = securityIdToSymbol.keys.joinToString(",") { "NSE:$it:EQUITY" }
-        ApiService.fetchData(context, prefs)?.let { responseBody ->
+        PayTMMoneyApiService.fetchData(context, prefs)?.let { responseBody ->
             saveToDatabase(parseStockResponse(responseBody))
         }
     }

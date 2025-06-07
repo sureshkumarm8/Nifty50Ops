@@ -56,21 +56,16 @@ data class SentimentSummaryEntity(
 
 @Entity(tableName = "market_insights_table")
 data class MarketInsightEntity(
-    @PrimaryKey val timestamp: String,            // when this insight was generated
-    val name: String = "NIFTY50",      // index name
-    val ltp: Double,                   // latest LTP
+    @PrimaryKey val timestamp: String,
+    val name: String = "NIFTY50",
+    val ltp: Double,
     val pointsChanged: Int,
     val intervalMinutes : String,
-
-    // Summary Text
     val stockSummary: String,
     val optionSummary: String,
     val sentimentSummary: String,
-
-    // Top 5 Fluctuations (as text for now — simple)
     val top5StockFluctuations: String,
     val top5OptionFluctuations: String,
-
-    // Trading Hints
-    val tradingHints: String
+    val tradingHints: String,
+    val gen_ai_insights: String? = null  // NOW nullable
 )

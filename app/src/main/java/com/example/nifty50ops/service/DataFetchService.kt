@@ -16,9 +16,10 @@ import com.example.nifty50ops.database.MarketDatabase
 import com.example.nifty50ops.repository.MarketRepository
 import com.example.nifty50ops.repository.OptionsRepository
 import com.example.nifty50ops.repository.StockRepository
-import com.example.nifty50ops.special_features.MarketOverview.debugData
+import com.example.nifty50ops.special_features.MarketOverview.buildPromptForGemini
 import com.example.nifty50ops.special_features.MarketOverview.generateAggregatedMarketInsight
 import com.example.nifty50ops.special_features.MarketOverview.generateMarketReviewSummary
+import com.example.nifty50ops.special_features.MarketOverview.updateGenAIInsights
 import com.example.nifty50ops.special_features.StockOptionsAggregator
 import com.example.nifty50ops.utils.readJwtToken
 import kotlinx.coroutines.*
@@ -103,34 +104,52 @@ class DataFetchService : Service() {
                 if (isMarketTime()) {
                     println("📊 Fetching data...")
                     try {
+                        // === STEP 1: Fetch and save base data ===
                         marketController.fetchMarketData(applicationContext)
                         stockController.fetchStockData(applicationContext)
                         optionsController.fetchOptionsData(applicationContext)
                         marketController.saveSummaries(applicationContext)
                         marketController.saveSentimentSummary(applicationContext)
 
-
-                        // 1Min summary always
-                        generateMarketReviewSummary(applicationContext)
-                        debugData(applicationContext)
-
-                        // Aggregated only at right intervals
                         val aggregator = StockOptionsAggregator()
                         val repository = MarketRepository(MarketDatabase.getDatabase(applicationContext).marketDao())
                         val currentMinute = LocalTime.now().minute
 
-                        if (currentMinute % 5 == 0) {
-                            generateAggregatedMarketInsight(applicationContext, aggregator, repository, 5)
+                        // === STEP 2: Always generate 1Min Market Review Summary + GenAI ===
+                        val oneMinInsight = generateMarketReviewSummary(applicationContext)
+                        serviceScope.launch(Dispatchers.IO) {
+                            try {
+                                val myPrompt = buildPromptForGemini(oneMinInsight)
+                                updateGenAIInsights(applicationContext, oneMinInsight.timestamp, myPrompt)
+                                println("✅ GenAI insights updated for 1Min summary at ${oneMinInsight.timestamp}")
+                            } catch (e: Exception) {
+                                println("⚠️ Error updating GenAI for 1Min: ${e.localizedMessage}")
+                            }
                         }
-                        if (currentMinute % 10 == 0) {
-                            generateAggregatedMarketInsight(applicationContext, aggregator, repository, 10)
+
+                        // === STEP 3: Aggregated Intervals Handling ===
+                        suspend fun processAggregatedInsight(interval: Int) {
+                            try {
+                                val insight = generateAggregatedMarketInsight(applicationContext, aggregator, repository, interval)
+                                val myPrompt = buildPromptForGemini(insight)
+                                updateGenAIInsights(applicationContext, insight.timestamp, myPrompt)
+                                println("✅ GenAI insights updated for ${interval}Min summary at ${insight.timestamp}")
+                            } catch (e: Exception) {
+                                println("⚠️ Error updating GenAI for ${interval}Min: ${e.localizedMessage}")
+                            }
                         }
-                        if (currentMinute % 15 == 0) {
-                            generateAggregatedMarketInsight(applicationContext, aggregator, repository, 15)
+
+                        // Intervals list → easy to add/remove intervals later
+                        listOf(5, 10, 15).forEach { interval ->
+                            if (currentMinute % interval == 0) {
+                                serviceScope.launch(Dispatchers.IO) {
+                                    processAggregatedInsight(interval)
+                                }
+                            }
                         }
 
                     } catch (e: Exception) {
-                        println("❌ Error fetching: ${e.localizedMessage}")
+                        println("❌ Fatal error in Market fetch loop: ${e.localizedMessage}")
                     }
                 } else {
                     println("⏰ Outside market hours, skipping fetch")
@@ -149,8 +168,8 @@ class DataFetchService : Service() {
         val isWeekday = dayOfWeek in Calendar.MONDAY..Calendar.FRIDAY
         val isMarketHours = (hour > 9 || (hour == 9 && minute >= 17)) && (hour < 15 || (hour == 15 && minute <= 15))
 
-        return isWeekday && isMarketHours
-//        return true
+//        return isWeekday && isMarketHours
+        return true
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

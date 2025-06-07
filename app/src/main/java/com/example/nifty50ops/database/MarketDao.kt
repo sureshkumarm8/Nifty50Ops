@@ -117,5 +117,8 @@ interface MarketDao {
     @Query("SELECT * FROM market_insights_table WHERE intervalMinutes = :intervalMinutes ORDER BY timestamp ASC")
     fun getMarketInsightsByInterval(intervalMinutes: String): Flow<List<MarketInsightEntity>>
 
+    @Query("UPDATE market_insights_table SET gen_ai_insights = :insight WHERE timestamp = :timestamp")
+    suspend fun updateGenAIInsights(timestamp: String, insight: String)
+
 
 }

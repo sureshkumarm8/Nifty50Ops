@@ -7,7 +7,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -17,7 +16,7 @@ import com.example.nifty50ops.model.MarketInsightEntity
 import com.example.nifty50ops.repository.MarketRepository
 
 @Composable
-fun MarketOverviewScreen(context: Context, intervalTM: String) {
+fun MarketLiveGenAIAnalysisScreen(context: Context, intervalTM: String) {
     val context = LocalContext.current
     val dao = remember { MarketDatabase.getDatabase(context).marketDao() }
     val repository = remember { MarketRepository(dao) }
@@ -28,7 +27,6 @@ fun MarketOverviewScreen(context: Context, intervalTM: String) {
     LaunchedEffect(intervalTM) {
         repository.getMarketInsightsByInterval(intervalTM).collect { list ->
             insightsList = list.sortedByDescending { it.timestamp }
-//            if (list.isNotEmpty()) listState.animateScrollToItem(list.lastIndex)
         }
     }
 
@@ -57,7 +55,22 @@ fun MarketOverviewScreen(context: Context, intervalTM: String) {
                             text = "📈 ${insight.name} - ${insight.ltp} (${insight.pointsChanged})",
                             style = MaterialTheme.typography.bodyLarge
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // <-- GenAI Insight here if available -->
+                        insight.gen_ai_insights?.takeIf { it.isNotBlank() }?.let { genAIText ->
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "✨ GenAI Insight:",
+                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = genAIText.trim(),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
 
                         // Top 5 Stocks
                         Text("📊 Top 5 Stocks", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
@@ -89,5 +102,6 @@ fun MarketOverviewScreen(context: Context, intervalTM: String) {
         }
     }
 }
+
 
 

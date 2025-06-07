@@ -2,7 +2,7 @@ package com.example.nifty50ops.controller
 
 import android.content.Context
 import com.example.nifty50ops.model.OptionsEntity
-import com.example.nifty50ops.network.ApiService
+import com.example.nifty50ops.network.PayTMMoneyApiService
 import com.example.nifty50ops.repository.OptionsRepository
 import com.example.nifty50ops.utils.readSecurityIdToSymbolMap
 import com.example.nifty50ops.utils.roundTo2DecimalPlaces
@@ -22,7 +22,7 @@ class OptionsController(private val optionRepository: OptionsRepository) {
     suspend fun fetchOptionsData(context: Context) {
         securityIdToSymbol = readSecurityIdToSymbolMap(context)
         val prefs = securityIdToSymbol.keys.joinToString(",") { "NSE:$it:OPTION" }
-        ApiService.fetchData(context, prefs)?.let { responseBody ->
+        PayTMMoneyApiService.fetchData(context, prefs)?.let { responseBody ->
             saveToDatabase(parseOptionResponse(responseBody))
         }
     }

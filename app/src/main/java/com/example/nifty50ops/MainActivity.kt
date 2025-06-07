@@ -69,7 +69,7 @@ import com.example.nifty50ops.utils.readJwtToken
 import com.example.nifty50ops.utils.readSecurityIdToSymbolMap
 import com.example.nifty50ops.view.AboutScreen
 import com.example.nifty50ops.view.MainScreen
-import com.example.nifty50ops.view.MarketOverviewScreen
+import com.example.nifty50ops.view.MarketLiveGenAIAnalysisScreen
 import com.example.nifty50ops.view.OISummaryHistoryScreen
 import com.example.nifty50ops.view.OptionHistoryScreen
 import com.example.nifty50ops.view.OptionsScreen
@@ -113,10 +113,10 @@ class MainActivity : ComponentActivity() {
     fun AppDrawer(onItemSelected: (String) -> Unit, selectedItem: String = "main") {
         val menuItems = listOf(
             DrawerItem("main", "🏠 Home"),
-            DrawerItem("stocks", "📈 Stocks"),
-            DrawerItem("options", "📊 Options"),
-            DrawerItem("market_overview", "⚙️ Market Live Analysis"),
-            DrawerItem("csv_export", "💾 Export CSV"),
+            DrawerItem("stocks", "💹 Stocks"),
+            DrawerItem("options", "📉 Options"),
+            DrawerItem("market_live_gen_ai_analysis", "✨ GenAI Market Live Analysis"),
+            DrawerItem("csv_export", "🗃️ Export CSV"),
             DrawerItem("about", "ℹ️ About")
         )
 
@@ -218,7 +218,7 @@ class MainActivity : ComponentActivity() {
             currentRoute == "stocks" -> "📈 Nifty 50 Stock Updates"
             currentRoute == "options" -> "📊 Weekly Nifty 50 Options"
             currentRoute == "csv_export" -> "💾 Export CSV"
-            currentRoute == "market_overview" -> "⚙️ Market Live Analysis"
+            currentRoute == "market_live_gen_ai_analysis" -> "✨ GenAI Market Analysis"
             currentRoute == "about" -> "ℹ️ About"
             currentRoute == "sentiment_summary_history" -> "📈 Sentiment Summary History"
             currentRoute == "stock_summary_history" -> "📈 Stock Summary History"
@@ -232,7 +232,7 @@ class MainActivity : ComponentActivity() {
         val optionsInterval = remember { mutableStateOf("1Min") }
         val oiInterval = remember { mutableStateOf("1Min") }
         val sentimentInterval = remember { mutableStateOf("1Min") }
-        val marketOverviewInterval = remember { mutableStateOf("1Min") }
+        val marketLiveAnalysisInterval = remember { mutableStateOf("1Min") }
 
         // Map current route to corresponding interval setter
         val intervalSelectionMap = mapOf(
@@ -240,7 +240,7 @@ class MainActivity : ComponentActivity() {
             "options_summary_history" to { value: String -> optionsInterval.value = value },
             "oi_summary_history" to { value: String -> oiInterval.value = value },
             "sentiment_summary_history" to { value: String -> sentimentInterval.value = value },
-            "market_overview" to { value: String -> marketOverviewInterval.value = value }
+            "market_live_gen_ai_analysis" to { value: String -> marketLiveAnalysisInterval.value = value }
         )
 
         ModalNavigationDrawer(
@@ -290,7 +290,7 @@ class MainActivity : ComponentActivity() {
                                 currentRoute == "options_summary_history" ||
                                 currentRoute == "oi_summary_history" ||
                                 currentRoute == "sentiment_summary_history"||
-                                currentRoute == "market_overview"
+                                currentRoute == "market_live_gen_ai_analysis"
                             ) {
                                 IconButton(onClick = { menuExpanded = true }) {
                                     Icon(
@@ -333,7 +333,7 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("stocks") { StockScreen(context, navController) }
                         composable("options") { OptionsScreen(context, navController) }
-                        composable("market_overview") { MarketOverviewScreen(context, marketOverviewInterval.value ) }
+                        composable("market_live_gen_ai_analysis") { MarketLiveGenAIAnalysisScreen(context, marketLiveAnalysisInterval.value ) }
                         composable("csv_export") { ExportDataScreen(context) }
                         composable("about") { AboutScreen(context) }
 

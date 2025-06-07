@@ -2,6 +2,9 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    // Add the Google services Gradle plugin
+    id("com.google.gms.google-services")
+
     id("kotlin-kapt")
 }
 
@@ -101,5 +104,16 @@ dependencies {
     // csv util
     implementation(libs.opencsv)
     implementation (libs.poi.ooxml)
+
+    // Import the BoM for the Firebase platform
+    implementation(platform(libs.firebase.bom))
+
+    implementation(libs.firebase.analytics)
+
+
+
+    // Add the dependency for the Firebase AI Logic library
+    // When using the BoM, you don't specify versions in Firebase library dependencies
+    implementation(libs.firebase.ai)
 
 }

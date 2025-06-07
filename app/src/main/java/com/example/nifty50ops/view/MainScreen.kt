@@ -87,10 +87,4 @@ fun MainHeader(time: String, nifty: Double) {
     }
 }
 
-@Composable
-fun SettingsScreen(context: Context) {
-    Box(Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Settings coming soon 🔧", fontSize = 18.sp)
-    }
-}
 
