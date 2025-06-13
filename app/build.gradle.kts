@@ -23,7 +23,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -58,7 +58,6 @@ dependencies {
     implementation("androidx.compose.ui:ui:1.6.1")
     implementation("androidx.compose.material3:material3:1.1.2")
     implementation("androidx.compose.ui:ui-tooling-preview")
-//    implementation("com.google.android.material:material:1.11.0")
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.constraintlayout)
@@ -92,8 +91,8 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
 
     // Hilt
-    implementation(libs.hilt.android)
-    implementation(libs.androidx.hilt.navigation.compose)
+//    implementation(libs.hilt.android) // No Hilt annotations found
+//    implementation(libs.androidx.hilt.navigation.compose) // No Hilt annotations found
 //    kapt(libs.hilt.compiler) // Add if you use Hilt annotations
 
     // Testing
