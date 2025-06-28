@@ -16,6 +16,8 @@ data class MarketsEntity(
 data class StockSummaryEntity(
     @PrimaryKey val lastUpdated: String,
     val ltp: Double,
+    val ltpLastMin: Double,
+    val ltpOverall: Double,
     val buyAvg: Double,
     val sellAvg: Double,
     val lastMinSentiment: Double,

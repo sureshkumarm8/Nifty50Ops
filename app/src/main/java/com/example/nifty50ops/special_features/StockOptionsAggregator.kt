@@ -44,6 +44,8 @@ class StockOptionsAggregator {
                 StockSummaryEntity(
                     lastUpdated = startTime.format(formatter),  // used as group key
                     ltp = items.maxByOrNull { it.lastUpdated }?.ltp ?: 0.0,
+                    ltpLastMin = items.maxByOrNull { it.ltpLastMin }?.ltpLastMin ?: 0.0,
+                    ltpOverall = items.maxByOrNull { it.ltpOverall }?.ltpOverall ?: 0.0,
                     overAllSentiment = items.sumOf { it.overAllSentiment },
                     stockBuyStr = items.sumOf { it.stockBuyStr },
                     stockSellStr = items.sumOf { it.stockSellStr },
@@ -133,6 +135,8 @@ class StockOptionsAggregator {
                     timestamp = startTime.format(formatter),
                     name = latest?.name ?: "-",
                     ltp = latest?.ltp ?: 0.0,
+                    lastMinLtpDiff = items.sumOf { it.lastMinLtpDiff },
+                    overAllLtpDiff = items.sumOf { it.overAllLtpDiff },
                     buyQty = items.sumOf { it.buyQty },
                     sellQty = items.sumOf { it.sellQty },
                     buyStrengthPercent = items.map { it.buyStrengthPercent }.average(),

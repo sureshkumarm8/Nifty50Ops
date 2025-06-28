@@ -69,6 +69,8 @@ class StockController(private val stockRepository: StockRepository) {
                     timestamp = timestamp,
                     name = name,
                     ltp = ltp,
+                    lastMinLtpDiff = 0.0,
+                    overAllLtpDiff = 0.0,
                     buyQty = buyQty,
                     sellQty = sellQty,
                     buyDiffPercent = 0.0,
@@ -79,6 +81,14 @@ class StockController(private val stockRepository: StockRepository) {
                     overAllSentiment = 0.0
                 )
             }
+
+            val lastMinLtpDiff = previous?.ltp?.takeIf { it != 0.0 }?.let {
+                ((ltp - it) / it) * 100
+            }?.roundTo2DecimalPlaces() ?: 0.0
+
+            val overAllLtpDiff = first.ltp.takeIf { it != 0.0 }?.let {
+                ((ltp - it) / it) * 100
+            }?.roundTo2DecimalPlaces() ?: 0.0
 
             val buyDiffPercent = previous?.let {
                 if (it.buyQty != 0) ((buyQty - it.buyQty).toDouble() / it.buyQty) * 100 else 0.0
@@ -107,6 +117,8 @@ class StockController(private val stockRepository: StockRepository) {
                 timestamp = timestamp,
                 name = name,
                 ltp = ltp,
+                lastMinLtpDiff = lastMinLtpDiff.roundTo2DecimalPlaces(),
+                overAllLtpDiff = overAllLtpDiff.roundTo2DecimalPlaces(),
                 buyQty = buyQty,
                 sellQty = sellQty,
                 buyDiffPercent = buyDiffPercent.roundTo2DecimalPlaces(),

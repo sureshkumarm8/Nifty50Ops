@@ -71,21 +71,16 @@ object MarketOverview {
 
             // Stock Group Summary
             val stockSummary = """
-            📊 Stock Group Summary
-            • Time: ${stockSummaryEntity.lastUpdated}
-            • LTP: ${"%.1f".format(stockSummaryEntity.ltp)}
-            • Buy Avg: ${"%.1f".format(stockSummaryEntity.buyAvg)}% | Sell Avg: ${
-                "%.1f".format(
-                    stockSummaryEntity.sellAvg
-                )
-            }%
-            • Buy Strength: ${"%.1f".format(stockSummaryEntity.stockBuyStr)}% | Sell Strength: ${
-                "%.1f".format(
-                    stockSummaryEntity.stockSellStr
-                )
-            }%
-            • Overall Sentiment: ${"%.1f".format(stockSummaryEntity.overAllSentiment)}%
-        """.trimIndent()
+                📊 Stock Group Summary
+                • Time: ${stockSummaryEntity.lastUpdated}
+                • LTP: ${"%.1f".format(stockSummaryEntity.ltp)}
+                • LTP Δ 1Min: ${"%.2f".format(stockSummaryEntity.ltpLastMin)}% | LTP Δ Overall: ${"%.2f".format(stockSummaryEntity.ltpOverall)}%
+                • Buy Avg: ${"%.1f".format(stockSummaryEntity.buyAvg)}% | Sell Avg: ${"%.1f".format(stockSummaryEntity.sellAvg)}%
+                • Buy Strength: ${"%.1f".format(stockSummaryEntity.stockBuyStr)}% | Sell Strength: ${"%.1f".format(stockSummaryEntity.stockSellStr)}%
+                • 1Min Sentiment: ${"%.1f".format(stockSummaryEntity.lastMinSentiment)}%
+                • Overall Sentiment: ${"%.1f".format(stockSummaryEntity.overAllSentiment)}%
+                """.trimIndent()
+
 
             // Option Group Summary
             val optionSummary = """

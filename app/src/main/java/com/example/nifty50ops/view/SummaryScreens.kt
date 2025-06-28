@@ -129,8 +129,8 @@ fun StockSummary(context: Context, navController: NavController) {
                 "BuyStr" to "%.1f".format(curr.stockBuyStr),
                 "SellStr" to "%.1f".format(curr.stockSellStr),
                 "LastMin" to "%.1f".format(curr.lastMinSentiment),
-                "Buy Avg %" to "%.1f".format(curr.buyAvg),
-                "Sell Avg %" to "%.1f".format(curr.sellAvg)
+                "LTPStr" to "%.1f".format(curr.ltpOverall),
+                "LTP1Min" to "%.1f".format(curr.ltpLastMin)
             ),
             onClick = {
                 navController.navigate("stock_summary_history")

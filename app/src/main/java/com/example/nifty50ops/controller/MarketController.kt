@@ -102,6 +102,8 @@ class MarketController(private val marketRepository: MarketRepository) {
         val stocks = stockRepo.getLastMinStocks().first()
         val options = optionsRepo.getLastMinOptions().first()
 
+        val stockLtpLastMinAvg = stocks.map { it.lastMinLtpDiff }.averageOrZero()
+        val stockLtpOverAllAvg = stocks.map { it.overAllLtpDiff }.averageOrZero()
         val stockBuyAvg = stocks.map { it.buyDiffPercent }.averageOrZero()
         val stockSellAvg = stocks.map { it.sellDiffPercent }.averageOrZero()
         val stockLastMinSentiment = stocks.map { it.lastMinSentiment }.averageOrZero()
@@ -129,6 +131,8 @@ class MarketController(private val marketRepository: MarketRepository) {
         val stockSummaryEntity = StockSummaryEntity(
             lastUpdated = stockTime,
             ltp = marketValue.ltp,
+            ltpLastMin = stockLtpLastMinAvg,
+            ltpOverall = stockLtpOverAllAvg,
             buyAvg = stockBuyAvg,
             sellAvg = stockSellAvg,
             lastMinSentiment = stockLastMinSentiment,

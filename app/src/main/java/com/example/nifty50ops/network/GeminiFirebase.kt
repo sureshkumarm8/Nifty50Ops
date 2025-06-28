@@ -40,33 +40,32 @@ ${Constants.SYSTEM_ROLE_DESCRIPTION}
 
 ${Constants.RESPONSE_FORMAT}
 
-${Constants.SNAPSHOT_HEADER}:
+${Constants.SNAPSHOT_HEADER}
 • Timestamp: ${insight.timestamp}
 • Latest Price (LTP): ${insight.ltp}
 • Points Changed: ${insight.pointsChanged}
 
---- Stock Summary ---
+📊 Stock Summary
 ${insight.stockSummary}
 
---- Option Summary ---
+📈 Option Summary
 ${insight.optionSummary}
 
---- Sentiment Summary ---
+💬 Sentiment Summary
 ${insight.sentimentSummary}
 
---- Top 5 Stock Fluctuations ---
+📉 Top 5 Stock Fluctuations
 ${insight.top5StockFluctuations}
 
---- Top 5 Option Fluctuations ---
+📉 Top 5 Option Fluctuations
 ${insight.top5OptionFluctuations}
 
---- Trading Hints from App ---
+🔎 Trading Hints from App
 ${insight.tradingHints}
-
----
 
 ${Constants.SNAPSHOT_INSTRUCTION}
 """.trimIndent()
 }
+
 
 
