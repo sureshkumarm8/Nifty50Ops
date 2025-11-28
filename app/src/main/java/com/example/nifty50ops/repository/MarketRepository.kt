@@ -1,13 +1,16 @@
 package com.example.nifty50ops.repository
 
 import com.example.nifty50ops.database.MarketDao
+import com.example.nifty50ops.model.MarketInsightEntity
 import com.example.nifty50ops.model.MarketsEntity
 import com.example.nifty50ops.model.OptionsSummaryEntity
+import com.example.nifty50ops.model.SentimentSummaryEntity
 import com.example.nifty50ops.model.StockSummaryEntity
 import kotlinx.coroutines.flow.Flow
 
 class MarketRepository(private val marketDao: MarketDao) {
     suspend fun insertEntity(option: MarketsEntity) = marketDao.insertMarketData(option)
+
     fun getAllData(): Flow<List<MarketsEntity>> = marketDao.getAllMarketData()
     fun getLatestData(): Flow<MarketsEntity> = marketDao.getLatestMarketData()
 
@@ -19,5 +22,13 @@ class MarketRepository(private val marketDao: MarketDao) {
     fun getAllStockSummary(): Flow<List<StockSummaryEntity>> = marketDao.getAllStockSummary()
     fun getAllOptionsSummary(): Flow<List<OptionsSummaryEntity>> = marketDao.getAllOptionsSummary()
 
+    suspend fun insertSentimentSummary(sentimentSummary: SentimentSummaryEntity) = marketDao.insertSentimentSummary(sentimentSummary)
+    fun getAllSentimentSummary(): Flow<List<SentimentSummaryEntity>> = marketDao.getAllSentimentSummary()
+    fun getLastSentimentSummary(): Flow<List<SentimentSummaryEntity>> = marketDao.getLastSentimentSummary()
+
+    suspend fun insertMarketInsights(insight: MarketInsightEntity) = marketDao.insertMarketInsight(insight)
+    fun getAllMarketInsights(): Flow<List<MarketInsightEntity>> = marketDao.getAllMarketInsights()
+    fun getLatestMarketInsight(): Flow<MarketInsightEntity?> = marketDao.getLatestMarketInsight()
+    fun getMarketInsightsByInterval(intervalMinutes: String) = marketDao.getMarketInsightsByInterval(intervalMinutes)
 
 }

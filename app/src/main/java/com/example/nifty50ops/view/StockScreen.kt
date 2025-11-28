@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,6 +25,10 @@ import com.example.nifty50ops.model.StockSummaryEntity
 import com.example.nifty50ops.repository.MarketRepository
 import com.example.nifty50ops.repository.StockRepository
 import com.example.nifty50ops.utils.convertToLacsString
+import com.example.nifty50ops.utils.setColorForBuy
+import com.example.nifty50ops.utils.setColorForBuyStr
+import com.example.nifty50ops.utils.setColorForSell
+import com.example.nifty50ops.utils.setColorForSellStr
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
@@ -53,18 +58,19 @@ fun StockScreen(context: Context, navController: NavController) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 10.dp)
-                .background(MaterialTheme.colorScheme.primaryContainer),
+                .padding(vertical = 4.dp)
+                .background(Color(0xFF2196F3)),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TableHeaderCell("Name", weight = 2f)
+            TableHeaderCell("Name", weight = 2f, textAlign = TextAlign.Start)
             TableHeaderCell("LTP")
             TableHeaderCell("Buy Qty")
             TableHeaderCell("Sell Qty")
-            TableHeaderCell("Buy %")
-            TableHeaderCell("Sell %")
             TableHeaderCell("BuyStr %")
             TableHeaderCell("SellStr %")
+            TableHeaderCell("Buy %")
+            TableHeaderCell("Sell %")
+
         }
 
         Divider(color = Color.Gray, thickness = 1.dp)
@@ -77,36 +83,32 @@ fun StockScreen(context: Context, navController: NavController) {
 
 @Composable
 fun StockTable(stockList: List<StockEntity>, onRowClick: (String) -> Unit) {
+    val enrichedList = remember(stockList) {
+        stockList.mapIndexed { index, curr ->
+            val prev = stockList.getOrNull(index - 1)
+            StocksWithPrevious(curr, prev)
+        }
+    }
     LazyColumn {
-        items(stockList) { stock ->
-            val buyColor = when {
-                stock.buyDiffPercent > 0 -> Color(0xFF2E7D32) // Green
-                stock.buyDiffPercent < 0 -> Color(0xFFC62828) // Red
-                else -> Color.Gray
-            }
-
-            val sellColor = when {
-                stock.sellDiffPercent > 0 -> Color(0xFFC62828) // Red
-                stock.sellDiffPercent < 0 -> Color(0xFF2E7D32) // Green
-                else -> Color.Gray
-            }
-
+        items(enrichedList) { item ->
+            val curr = item.current
+            val prev = item.prev
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onRowClick(stock.name) }
+                    .clickable { onRowClick(curr.name) }
                     .padding(vertical = 2.dp),
 
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                TableCell(stock.name, color = Color.Blue, weight = 2f)
-                TableCell("%.0f".format(stock.ltp), fontSize = 12.sp)
-                TableCell("%.2f".format(stock.buyQty.toDouble() / 100000))
-                TableCell("%.2f".format(stock.sellQty.toDouble() / 100000))
-                TableCell("%.1f".format(stock.buyDiffPercent), color = buyColor)
-                TableCell("%.1f".format(stock.sellDiffPercent), color = sellColor)
-                TableCell("%.1f".format(stock.buyStrengthPercent), color = buyColor)
-                TableCell("%.1f".format(stock.sellStrengthPercent), color = sellColor)
+                TableCell(curr.name, color = Color(0xFF2196F3), weight = 2f, textAlign = TextAlign.Start)
+                TableCell("%.0f".format(curr.ltp), fontSize = 12.sp, color = setColorForBuyStr(curr.ltp, prev?.ltp ?: curr.ltp))
+                TableCell(convertToLacsString(curr.buyQty), color = setColorForBuyStr(curr.buyQty.toDouble(), prev?.buyQty?.toDouble() ?: curr.buyQty.toDouble()))
+                TableCell(convertToLacsString(curr.sellQty), color = setColorForSellStr(curr.sellQty.toDouble(), prev?.sellQty?.toDouble() ?: curr.sellQty.toDouble()))
+                TableCell("%.1f".format(curr.buyStrengthPercent), color = setColorForBuyStr(curr.buyStrengthPercent, prev?.buyStrengthPercent ?: curr.buyStrengthPercent))
+                TableCell("%.1f".format(curr.sellStrengthPercent), color = setColorForSellStr(curr.sellStrengthPercent, prev?.sellStrengthPercent ?: curr.sellStrengthPercent))
+                TableCell("%.1f".format(curr.buyDiffPercent), color = setColorForBuyStr(curr.buyDiffPercent, prev?.buyDiffPercent ?: curr.buyDiffPercent))
+                TableCell("%.1f".format(curr.sellDiffPercent), color = setColorForSellStr(curr.sellDiffPercent, prev?.sellDiffPercent ?: curr.sellDiffPercent))
             }
 
             Divider(color = Color.LightGray)
@@ -116,7 +118,7 @@ fun StockTable(stockList: List<StockEntity>, onRowClick: (String) -> Unit) {
 }
 
 @Composable
-fun RowScope.TableHeaderCell(text: String, weight: Float = 1f) {
+fun RowScope.TableHeaderCell(text: String, weight: Float = 1f, textAlign: TextAlign = TextAlign.End) {
     Text(
         text = text,
         modifier = Modifier
@@ -124,12 +126,19 @@ fun RowScope.TableHeaderCell(text: String, weight: Float = 1f) {
             .padding(6.dp),
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.onPrimaryContainer,
-        style = MaterialTheme.typography.labelLarge
+        style = MaterialTheme.typography.labelLarge,
+        textAlign = textAlign
     )
 }
 
 @Composable
-fun RowScope.TableCell(text: String, color: Color = Color.Unspecified, weight: Float = 1f, fontSize: TextUnit = 12.sp) {
+fun RowScope.TableCell(
+    text: String,
+    color: Color = Color.Unspecified,
+    weight: Float = 1f,
+    fontSize: TextUnit = 12.sp,
+    textAlign: TextAlign = TextAlign.End
+) {
     Text(
         text = text,
         modifier = Modifier
@@ -137,10 +146,16 @@ fun RowScope.TableCell(text: String, color: Color = Color.Unspecified, weight: F
             .padding(6.dp),
         color = color,
         fontSize = fontSize,
+        fontWeight = FontWeight.Bold,
         style = MaterialTheme.typography.bodyMedium,
+        textAlign = textAlign
     )
 }
 
+data class StocksWithPrevious(
+    val current: StockEntity,
+    val prev: StockEntity?
+)
 @Composable
 fun StockHistoryScreen(context: Context, stockName: String) {
     val stockDao = MarketDatabase.getDatabase(context).marketDao()
@@ -171,49 +186,45 @@ fun StockHistoryScreen(context: Context, stockName: String) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 10.dp)
-                .background(MaterialTheme.colorScheme.primaryContainer),
+                .background(Color(0xFF2196F3)),
             verticalAlignment = Alignment.CenterVertically
         ) {
             TableHeaderCell("Time")
             TableHeaderCell("LTP")
             TableHeaderCell("Buy Qty")
             TableHeaderCell("Sell Qty")
-            TableHeaderCell("Buy %")
-            TableHeaderCell("Sell %")
             TableHeaderCell("BuyStr %")
             TableHeaderCell("SellStr %")
+            TableHeaderCell("Buy %")
+            TableHeaderCell("Sell %")
+
         }
 
         Divider(color = Color.Gray, thickness = 1.dp)
-
+        val enrichedList = remember(stockList) {
+            stockList.mapIndexed { index, curr ->
+                val prev = stockList.getOrNull(index - 1)
+                StocksWithPrevious(curr, prev)
+            }
+        }
         LazyColumn(state = listState) {
-            items(stockList) { stock ->
-                val buyColor = when {
-                    stock.buyDiffPercent > 0 -> Color(0xFF2E7D32)
-                    stock.buyDiffPercent < 0 -> Color(0xFFC62828)
-                    else -> Color.Gray
-                }
-
-                val sellColor = when {
-                    stock.sellDiffPercent > 0 -> Color(0xFFC62828)
-                    stock.sellDiffPercent < 0 -> Color(0xFF2E7D32)
-                    else -> Color.Gray
-                }
-
+            items(enrichedList) { item ->
+                val curr = item.current
+                val prev = item.prev
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 2.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TableCell(stock.timestamp)
-                    TableCell(stock.ltp.toString())
-                    TableCell(convertToLacsString(stock.buyQty))
-                    TableCell(convertToLacsString(stock.sellQty))
-                    TableCell("%.1f".format(stock.buyDiffPercent), color = buyColor)
-                    TableCell("%.1f".format(stock.sellDiffPercent), color = sellColor)
-                    TableCell("%.1f".format(stock.buyStrengthPercent), color = buyColor)
-                    TableCell("%.1f".format(stock.sellStrengthPercent), color = sellColor)
+                    TableCell(curr.timestamp)
+                    TableCell(curr.ltp.toString(), color = setColorForBuyStr(curr.ltp, prev?.ltp ?: curr.ltp))
+                    TableCell(convertToLacsString(curr.buyQty), color = setColorForBuyStr(curr.buyQty.toDouble(), prev?.buyQty?.toDouble() ?: curr.buyQty.toDouble()))
+                    TableCell(convertToLacsString(curr.sellQty), color = setColorForSellStr(curr.sellQty.toDouble(), prev?.sellQty?.toDouble() ?: curr.sellQty.toDouble()))
+                    TableCell("%.1f".format(curr.buyStrengthPercent), color = setColorForBuyStr(curr.buyStrengthPercent, prev?.buyStrengthPercent ?: curr.buyStrengthPercent))
+                    TableCell("%.1f".format(curr.sellStrengthPercent), color = setColorForSellStr(curr.sellStrengthPercent, prev?.sellStrengthPercent ?: curr.sellStrengthPercent))
+                    TableCell("%.1f".format(curr.buyDiffPercent), color = setColorForBuyStr(curr.buyDiffPercent, prev?.buyDiffPercent ?: curr.buyDiffPercent))
+                    TableCell("%.1f".format(curr.sellDiffPercent), color = setColorForSellStr(curr.sellDiffPercent, prev?.sellDiffPercent ?: curr.sellDiffPercent))
                 }
 
                 Divider(color = Color.LightGray)

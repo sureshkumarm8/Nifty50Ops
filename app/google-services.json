@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "850736121454",
+    "project_id": "nifty50ops-genai",
+    "storage_bucket": "nifty50ops-genai.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:850736121454:android:dac72b2586686fe21ec87f",
+        "android_client_info": {
+          "package_name": "com.example.nifty50ops"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB_uHvZfjDwWMb1YLrd9zfSzrYsainm7lk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

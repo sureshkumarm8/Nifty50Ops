@@ -7,7 +7,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
-object ApiService {
+object PayTMMoneyApiService {
 
     private val client = OkHttpClient()
     var jwtToken: String? = null

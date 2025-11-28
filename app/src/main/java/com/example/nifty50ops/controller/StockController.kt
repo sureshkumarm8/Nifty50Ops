@@ -2,9 +2,11 @@ package com.example.nifty50ops.controller
 
 import android.content.Context
 import com.example.nifty50ops.model.StockEntity
-import com.example.nifty50ops.network.ApiService
+import com.example.nifty50ops.network.PayTMMoneyApiService
 import com.example.nifty50ops.repository.StockRepository
+import com.example.nifty50ops.utils.roundTo2DecimalPlaces
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -16,7 +18,7 @@ class StockController(private val stockRepository: StockRepository) {
 
     suspend fun fetchStockData(context: Context) {
         val prefs = securityIdToSymbol.keys.joinToString(",") { "NSE:$it:EQUITY" }
-        ApiService.fetchData(context, prefs)?.let { responseBody ->
+        PayTMMoneyApiService.fetchData(context, prefs)?.let { responseBody ->
             saveToDatabase(parseStockResponse(responseBody))
         }
     }
@@ -25,10 +27,27 @@ class StockController(private val stockRepository: StockRepository) {
     private val previousStockMap = mutableMapOf<String, StockEntity>()
     private val firstStockMap = mutableMapOf<String, StockEntity>()
 
-    private fun parseStockResponse(response: String): List<StockEntity> {
+    private suspend fun parseStockResponse(response: String): List<StockEntity> {
         val stockList = mutableListOf<StockEntity>()
         val jsonObject = JSONObject(response)
         val dataArray: JSONArray = jsonObject.optJSONArray("data") ?: JSONArray()
+
+        // Fetch latest stored stocks from DB (once)
+        val latestStoredStocks = stockRepository.getLastMinStocks().firstOrNull() ?: emptyList()
+
+        // Initialize previousStockMap from DB if not already populated
+        for (stock in latestStoredStocks) {
+            if (!previousStockMap.containsKey(stock.name)) {
+                previousStockMap[stock.name] = stock
+            }
+        }
+
+        if (firstStockMap.isEmpty()) {
+            val firstMinuteStocks = stockRepository.getFirstMinuteStocks()
+            for (stock in firstMinuteStocks) {
+                firstStockMap[stock.name] = stock
+            }
+        }
 
         for (i in 0 until dataArray.length()) {
             val stockObject = dataArray.getJSONObject(i)
@@ -50,6 +69,8 @@ class StockController(private val stockRepository: StockRepository) {
                     timestamp = timestamp,
                     name = name,
                     ltp = ltp,
+                    lastMinLtpDiff = 0.0,
+                    overAllLtpDiff = 0.0,
                     buyQty = buyQty,
                     sellQty = sellQty,
                     buyDiffPercent = 0.0,
@@ -60,6 +81,14 @@ class StockController(private val stockRepository: StockRepository) {
                     overAllSentiment = 0.0
                 )
             }
+
+            val lastMinLtpDiff = previous?.ltp?.takeIf { it != 0.0 }?.let {
+                ((ltp - it) / it) * 100
+            }?.roundTo2DecimalPlaces() ?: 0.0
+
+            val overAllLtpDiff = first.ltp.takeIf { it != 0.0 }?.let {
+                ((ltp - it) / it) * 100
+            }?.roundTo2DecimalPlaces() ?: 0.0
 
             val buyDiffPercent = previous?.let {
                 if (it.buyQty != 0) ((buyQty - it.buyQty).toDouble() / it.buyQty) * 100 else 0.0
@@ -88,14 +117,16 @@ class StockController(private val stockRepository: StockRepository) {
                 timestamp = timestamp,
                 name = name,
                 ltp = ltp,
+                lastMinLtpDiff = lastMinLtpDiff.roundTo2DecimalPlaces(),
+                overAllLtpDiff = overAllLtpDiff.roundTo2DecimalPlaces(),
                 buyQty = buyQty,
                 sellQty = sellQty,
-                buyDiffPercent = buyDiffPercent,
-                sellDiffPercent = sellDiffPercent,
-                lastMinSentiment = lastMinSentiment,
-                buyStrengthPercent = buyStrengthPercent,
-                sellStrengthPercent = sellStrengthPercent,
-                overAllSentiment = overAllSentiment
+                buyDiffPercent = buyDiffPercent.roundTo2DecimalPlaces(),
+                sellDiffPercent = sellDiffPercent.roundTo2DecimalPlaces(),
+                lastMinSentiment = lastMinSentiment.roundTo2DecimalPlaces(),
+                buyStrengthPercent = buyStrengthPercent.roundTo2DecimalPlaces(),
+                sellStrengthPercent = sellStrengthPercent.roundTo2DecimalPlaces(),
+                overAllSentiment = overAllSentiment.roundTo2DecimalPlaces()
             )
 
             previousStockMap[name] = currentStock

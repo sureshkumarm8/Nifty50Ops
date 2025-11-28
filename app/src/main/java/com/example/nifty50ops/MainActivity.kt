@@ -28,8 +28,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -60,18 +63,18 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.nifty50ops.service.DataFetchService
+import com.example.nifty50ops.ui.screens.ExportDataScreen
 import com.example.nifty50ops.ui.theme.Nifty50OpsTheme
 import com.example.nifty50ops.utils.readJwtToken
 import com.example.nifty50ops.utils.readSecurityIdToSymbolMap
 import com.example.nifty50ops.view.AboutScreen
 import com.example.nifty50ops.view.MainScreen
-import com.example.nifty50ops.view.MainViewModel
+import com.example.nifty50ops.view.MarketLiveGenAIAnalysisScreen
 import com.example.nifty50ops.view.OISummaryHistoryScreen
 import com.example.nifty50ops.view.OptionHistoryScreen
 import com.example.nifty50ops.view.OptionsScreen
 import com.example.nifty50ops.view.OptionsSummaryHistoryScreen
 import com.example.nifty50ops.view.SentimentSummaryHistoryScreen
-import com.example.nifty50ops.view.SettingsScreen
 import com.example.nifty50ops.view.StockHistoryScreen
 import com.example.nifty50ops.view.StockScreen
 import com.example.nifty50ops.view.StockSummaryHistoryScreen
@@ -110,9 +113,10 @@ class MainActivity : ComponentActivity() {
     fun AppDrawer(onItemSelected: (String) -> Unit, selectedItem: String = "main") {
         val menuItems = listOf(
             DrawerItem("main", "🏠 Home"),
-            DrawerItem("stocks", "📈 Stocks"),
-            DrawerItem("options", "📊 Options"),
-            DrawerItem("settings", "⚙️ Settings"),
+            DrawerItem("stocks", "💹 Stocks"),
+            DrawerItem("options", "📉 Options"),
+            DrawerItem("market_live_gen_ai_analysis", "✨ GenAI Market Live Analysis"),
+            DrawerItem("csv_export", "🗃️ Export CSV"),
             DrawerItem("about", "ℹ️ About")
         )
 
@@ -213,7 +217,8 @@ class MainActivity : ComponentActivity() {
             currentRoute == "main" -> "🏠 Nifty 50 Ops"
             currentRoute == "stocks" -> "📈 Nifty 50 Stock Updates"
             currentRoute == "options" -> "📊 Weekly Nifty 50 Options"
-            currentRoute == "settings" -> "⚙️ Settings"
+            currentRoute == "csv_export" -> "💾 Export CSV"
+            currentRoute == "market_live_gen_ai_analysis" -> "✨ GenAI Market Analysis"
             currentRoute == "about" -> "ℹ️ About"
             currentRoute == "sentiment_summary_history" -> "📈 Sentiment Summary History"
             currentRoute == "stock_summary_history" -> "📈 Stock Summary History"
@@ -221,6 +226,22 @@ class MainActivity : ComponentActivity() {
             currentRoute == "oi_summary_history" -> "📊 OI Summary History"
             else -> "📊 Nifty 50 OPS"
         }
+
+        // Individual interval states
+        val stockInterval = remember { mutableStateOf("1Min") }
+        val optionsInterval = remember { mutableStateOf("1Min") }
+        val oiInterval = remember { mutableStateOf("1Min") }
+        val sentimentInterval = remember { mutableStateOf("1Min") }
+        val marketLiveAnalysisInterval = remember { mutableStateOf("1Min") }
+
+        // Map current route to corresponding interval setter
+        val intervalSelectionMap = mapOf(
+            "stock_summary_history" to { value: String -> stockInterval.value = value },
+            "options_summary_history" to { value: String -> optionsInterval.value = value },
+            "oi_summary_history" to { value: String -> oiInterval.value = value },
+            "sentiment_summary_history" to { value: String -> sentimentInterval.value = value },
+            "market_live_gen_ai_analysis" to { value: String -> marketLiveAnalysisInterval.value = value }
+        )
 
         ModalNavigationDrawer(
             drawerState = drawerState,
@@ -231,7 +252,7 @@ class MainActivity : ComponentActivity() {
                         selectedItem = item
                         if (navController.currentDestination?.route != item) {
                             navController.navigate(item) {
-                                launchSingleTop = true // Prevent duplicates
+                                launchSingleTop = true
                                 restoreState = true
                             }
                         }
@@ -242,6 +263,8 @@ class MainActivity : ComponentActivity() {
         ) {
             Scaffold(
                 topBar = {
+                    var menuExpanded by remember { mutableStateOf(false) }
+
                     TopAppBar(
                         title = {
                             Text(
@@ -261,6 +284,38 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         },
+                        actions = {
+                            if (
+                                currentRoute == "stock_summary_history" ||
+                                currentRoute == "options_summary_history" ||
+                                currentRoute == "oi_summary_history" ||
+                                currentRoute == "sentiment_summary_history"||
+                                currentRoute == "market_live_gen_ai_analysis"
+                            ) {
+                                IconButton(onClick = { menuExpanded = true }) {
+                                    Icon(
+                                        imageVector = Icons.Default.MoreVert,
+                                        contentDescription = "More options",
+                                        tint = Color.White
+                                    )
+                                }
+
+                                DropdownMenu(
+                                    expanded = menuExpanded,
+                                    onDismissRequest = { menuExpanded = false }
+                                ) {
+                                    listOf("1Min", "5Min", "10Min", "15Min").forEach { label ->
+                                        DropdownMenuItem(
+                                            text = { Text(label) },
+                                            onClick = {
+                                                menuExpanded = false
+                                                intervalSelectionMap[currentRoute]?.invoke(label)
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        },
                         colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = Color(0xFF2196F3)
                         )
@@ -278,12 +333,22 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("stocks") { StockScreen(context, navController) }
                         composable("options") { OptionsScreen(context, navController) }
-                        composable("settings") { SettingsScreen(context) }
+                        composable("market_live_gen_ai_analysis") { MarketLiveGenAIAnalysisScreen(context, marketLiveAnalysisInterval.value ) }
+                        composable("csv_export") { ExportDataScreen(context) }
                         composable("about") { AboutScreen(context) }
-                        composable("sentiment_summary_history") { SentimentSummaryHistoryScreen(context) }
-                        composable("stock_summary_history") { StockSummaryHistoryScreen(context) }
-                        composable("options_summary_history") { OptionsSummaryHistoryScreen(context) }
-                        composable("oi_summary_history") { OISummaryHistoryScreen(context) }
+
+                        composable("sentiment_summary_history") {
+                            SentimentSummaryHistoryScreen(context, sentimentInterval.value)
+                        }
+                        composable("stock_summary_history") {
+                            StockSummaryHistoryScreen(context, stockInterval.value)
+                        }
+                        composable("options_summary_history") {
+                            OptionsSummaryHistoryScreen(context, optionsInterval.value)
+                        }
+                        composable("oi_summary_history") {
+                            OISummaryHistoryScreen(context, oiInterval.value)
+                        }
 
                         composable("stock_history/{stockName}") { backStackEntry ->
                             val stock = backStackEntry.arguments?.getString("stockName") ?: ""
@@ -298,6 +363,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
 
     private fun requestForegroundServicePermissionIfNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

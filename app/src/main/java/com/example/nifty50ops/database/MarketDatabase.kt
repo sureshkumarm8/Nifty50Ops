@@ -4,13 +4,19 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.example.nifty50ops.model.MarketInsightEntity
 import com.example.nifty50ops.model.MarketsEntity
 import com.example.nifty50ops.model.OptionsEntity
 import com.example.nifty50ops.model.OptionsSummaryEntity
+import com.example.nifty50ops.model.SentimentSummaryEntity
 import com.example.nifty50ops.model.StockEntity
 import com.example.nifty50ops.model.StockSummaryEntity
 
-@Database(entities = [OptionsEntity::class, StockEntity::class, MarketsEntity::class, StockSummaryEntity::class, OptionsSummaryEntity::class], version = 1, exportSchema = false)
+@Database(
+    entities = [ OptionsEntity::class, StockEntity::class, MarketsEntity::class,
+        StockSummaryEntity::class, OptionsSummaryEntity::class, SentimentSummaryEntity::class,
+        MarketInsightEntity::class],
+    version = 1, exportSchema = false)
 abstract class MarketDatabase : RoomDatabase() {
     abstract fun marketDao(): MarketDao
 

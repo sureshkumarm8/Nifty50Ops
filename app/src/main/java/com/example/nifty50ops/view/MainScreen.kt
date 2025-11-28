@@ -44,7 +44,7 @@ fun MainScreen(context: Context, navController: NavController) {
             Spacer(modifier = Modifier.height(12.dp))
             OptionsSummary(context, navController)
             Spacer(modifier = Modifier.height(12.dp))
-            OISummary(context, navController)
+            GenAIInsightSummary(context, navController)
             Spacer(modifier = Modifier.height(20.dp))
             SnapshotSection("📦 Stocks Snapshot") { StockSnapshot(context) }
             Spacer(modifier = Modifier.height(16.dp))
@@ -87,17 +87,4 @@ fun MainHeader(time: String, nifty: Double) {
     }
 }
 
-@Composable
-fun SettingsScreen(context: Context) {
-    Box(Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Settings coming soon 🔧", fontSize = 18.sp)
-    }
-}
-
-@Composable
-fun AboutScreen(context: Context) {
-    Box(Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Made with 💙 by You\nVersion 1.0", fontSize = 18.sp)
-    }
-}
 

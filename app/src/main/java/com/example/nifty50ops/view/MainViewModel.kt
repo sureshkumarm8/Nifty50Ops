@@ -32,11 +32,11 @@ class MainViewModel(context: Context) : ViewModel() {
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
-    private val _stockSummary = MutableStateFlow(StockSummaryEntity("", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0))
-    val stockSummary: StateFlow<StockSummaryEntity> = _stockSummary
-
-    private val _optionsSummary = MutableStateFlow(OptionsSummaryEntity("", 0.0,0, 0.0, 0.0, 0.0, 0.0,0.0, 0.0,0,0.0,0.0,0.0))
-    val optionsSummary: StateFlow<OptionsSummaryEntity> = _optionsSummary
+//    private val _stockSummary = MutableStateFlow(StockSummaryEntity("", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0))
+//    val stockSummary: StateFlow<StockSummaryEntity> = _stockSummary
+//
+//    private val _optionsSummary = MutableStateFlow(OptionsSummaryEntity("", 0.0,0, 0.0, 0.0, 0.0, 0.0,0.0, 0.0,0,0.0,0.0,0.0))
+//    val optionsSummary: StateFlow<OptionsSummaryEntity> = _optionsSummary
 
     init {
         observeData()
@@ -49,7 +49,7 @@ class MainViewModel(context: Context) : ViewModel() {
                 optionsRepo.getAllOptions(),
                 marketRepo.getAllData()
             ) { stocks, options, markets ->
-                computeAndSaveSummary(stocks, options, markets)
+//                computeAndSaveSummary(stocks, options, markets)
             }.launchIn(this)
 
             marketRepo.getAllData().collect { markets ->
@@ -65,6 +65,7 @@ class MainViewModel(context: Context) : ViewModel() {
         }
     }
 
+/*
     private suspend fun computeAndSaveSummary(
         stocks: List<StockEntity>,
         options: List<OptionsEntity>,
@@ -140,6 +141,6 @@ class MainViewModel(context: Context) : ViewModel() {
 //        Log.d("MainViewModel", "Stock BuyAvg: $stockBuyAvg | SellAvg: $stockSellAvg")
 //        Log.d("MainViewModel", "Options Volume: $optionsVolume | BuyAvg: $optionsBuyAvg | SellAvg: $optionsSellAvg")
     }
-
+*/
     private fun List<Double>.averageOrZero(): Double = if (isNotEmpty()) average() else 0.0
 }

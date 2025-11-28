@@ -1,11 +1,13 @@
 package com.example.nifty50ops.utils
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Environment
 import android.util.Log
 import androidx.compose.ui.graphics.Color
-import com.example.nifty50ops.network.ApiService
+import com.example.nifty50ops.network.PayTMMoneyApiService
 import java.io.File
+
 
 fun readSecurityIdToSymbolMap(context: Context): Map<Int, String> {
     val file = File(context.filesDir, "option_data/NiftyScrips.txt")
@@ -46,13 +48,16 @@ fun readJwtToken(context: Context) {
     val lastLine = lines.lastOrNull()
 
     if (!lastLine.isNullOrBlank()) {
-        ApiService.jwtToken = lastLine.trim()
-        Log.d("JWT", "JWT Token assigned: ${ApiService.jwtToken?.take(10)}...")
+        PayTMMoneyApiService.jwtToken = lastLine.trim()
+        Log.d("JWT", "JWT Token assigned: ${PayTMMoneyApiService.jwtToken?.take(10)}...")
     }
 }
 
 fun copyFromDownloadsToInternal(context: Context): Boolean {
-    val downloadFile = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "NiftyScrips.txt")
+    val downloadFile = File(
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+        "NiftyScrips.txt"
+    )
     val internalDir = File(context.filesDir, "option_data")
     if (!internalDir.exists()) internalDir.mkdirs()
     val internalFile = File(internalDir, "NiftyScrips.txt")
@@ -76,15 +81,55 @@ fun convertToLacsString(value: Int): String {
     return if (value >= 1000) "${"%.2f".format(value / 100000.0)}L" else value.toString()
 }
 
-fun twoDecimalDisplay(value: Double): String {
-    return("%.2f".format(value))
+fun convertToCrString(value: Int): String {
+    return if (value >= 1000) "${"%.2f".format(value / 10000000.0)}Cr" else value.toString()
 }
 
-fun setColorForHistory(stockAvg: Double): Color {
+fun twoDecimalDisplay(value: Double): String {
+    return ("%.2f".format(value))
+}
+
+fun oneDecimalDisplay(value: Double): String {
+    return ("%.1f".format(value))
+}
+
+fun setColorForBuy(value: Double): Color {
     val setColor = when {
-        stockAvg > 0 -> Color(0xFF2E7D32) // Green
-        stockAvg < 0 -> Color(0xFFC62828) // Red
+        value > 0 -> Color(0xFF2E7D32) // Increased Buys
+        value < 0 -> Color(0xFFC62828) // Decreased Buys
         else -> Color.Gray
     }
     return setColor
+}
+
+fun setColorForSell(value: Double): Color {
+    val setColor = when {
+        value < 0 -> Color(0xFF2E7D32) // Decreased Sells
+        value > 0 -> Color(0xFFC62828) // Increased Sells
+        else -> Color.Gray
+    }
+    return setColor
+}
+
+fun setColorForBuyStr(value: Double, prevValue: Double): Color {
+    val setColor = when {
+        value > prevValue -> Color(0xFF2E7D32) // Increased Buys
+        value < prevValue -> Color(0xFFC62828) // Decreased Buys
+        else -> Color.Gray
+    }
+    return setColor
+}
+
+fun setColorForSellStr(value: Double, prevValue: Double): Color {
+    val setColor = when {
+        value < prevValue -> Color(0xFF2E7D32) // Decreased Sells
+        value > prevValue -> Color(0xFFC62828) // Increased Sells
+        else -> Color.Gray
+    }
+    return setColor
+}
+
+@SuppressLint("DefaultLocale")
+fun Double.roundTo2DecimalPlaces(): Double {
+    return String.format("%.2f", this).toDouble()
 }

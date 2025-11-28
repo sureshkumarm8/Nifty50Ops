@@ -13,6 +13,8 @@ data class StockEntity(
     val timestamp: String,
     val name: String,
     val ltp: Double,
+    val lastMinLtpDiff: Double,
+    val overAllLtpDiff: Double,
     val buyQty: Int,
     val sellQty: Int,
     val buyDiffPercent: Double = 0.0,
